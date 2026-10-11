@@ -88,18 +88,18 @@ def create_app(env: str = 'default') -> Flask:
         upload_dir = app.config['UPLOAD_FOLDER']
         return send_from_directory(upload_dir, filename)
 
-    @app.route('/uploads/<path:filename>', endpoint='serve_upload')
-    def serve_upload(filename):
-        return uploaded_file(filename)
-
     return app
 
 
 def _ensure_upload_dirs(app: Flask):
+    """Create upload subdirectories. Silently skips on read-only filesystems (e.g. Vercel)."""
     base = app.config['UPLOAD_FOLDER']
     for sub in ('photos', 'videos', 'audio', 'thumbnails'):
         path = os.path.join(base, sub)
-        os.makedirs(path, exist_ok=True)
+        try:
+            os.makedirs(path, exist_ok=True)
+        except OSError:
+            pass
 
 
 def _seed_defaults(app: Flask):

@@ -1,0 +1,38 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env.local
+
+# Environment secrets — NEVER commit real credentials
+.env
+
+# SQLite databases (local dev only)
+*.db
+*.sqlite
+*.sqlite3
+instance/
+
+# Uploads (user media — not tracked in git)
+uploads/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Vercel local
+.vercel/

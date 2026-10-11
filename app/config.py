@@ -9,9 +9,9 @@ load_dotenv()
 
 
 def _db_uri():
-    """Build MySQL URI from DATABASE_URL env var or individual fields with seamless local fallback."""
+    """Build DB URI. Priority: USE_SQLITE > DATABASE_URL > individual vars > SQLite fallback."""
     if os.environ.get('USE_SQLITE', '').lower() in ('1', 'true'):
-        return 'sqlite:///nativeframes.db'
+        return 'sqlite:////tmp/nativeframes.db'
 
     url = os.environ.get('DATABASE_URL', '')
     if url:
@@ -21,22 +21,29 @@ def _db_uri():
         if url.startswith('mysql://'):
             url = url.replace('mysql://', 'mysql+pymysql://', 1)
 
-        # If pointing to internal Railway domain from a local machine outside Railway
+        # If pointing to internal Railway domain from outside Railway (local dev or Vercel)
         if 'railway.internal' in url:
             import socket
             try:
                 socket.gethostbyname('mysql.railway.internal')
             except (socket.gaierror, OSError):
-                return 'sqlite:///nativeframes.db'
+                # Unreachable — fall back to SQLite for safe cold-start
+                return 'sqlite:////tmp/nativeframes.db'
 
         return url
 
-    host = os.environ.get('DB_HOST', 'localhost')
-    port = os.environ.get('DB_PORT', '3306')
-    user = os.environ.get('DB_USER', 'root')
-    pw   = os.environ.get('DB_PASSWORD', '')
-    name = os.environ.get('DB_NAME', 'railway')
-    return f'mysql+pymysql://{user}:{pw}@{host}:{port}/{name}?charset=utf8mb4'
+    # Individual DB_* vars set → build URI
+    host = os.environ.get('DB_HOST', '')
+    if host and host not in ('localhost', '127.0.0.1'):
+        port = os.environ.get('DB_PORT', '3306')
+        user = os.environ.get('DB_USER', 'root')
+        pw   = os.environ.get('DB_PASSWORD', '')
+        name = os.environ.get('DB_NAME', 'railway')
+        return f'mysql+pymysql://{user}:{pw}@{host}:{port}/{name}?charset=utf8mb4'
+
+    # No usable database credentials found — use SQLite (safe for serverless cold-start)
+    return 'sqlite:////tmp/nativeframes.db'
+
 
 
 class BaseConfig:
@@ -59,9 +66,15 @@ class BaseConfig:
             'connect_args': {'connect_timeout': 10},
         }
 
-    # Uploads
-    UPLOAD_FOLDER = os.path.abspath(os.environ.get('UPLOAD_FOLDER', 'uploads'))
+    # Uploads — use /tmp on serverless (Vercel fs is read-only except /tmp)
+    UPLOAD_FOLDER = os.environ.get(
+        'UPLOAD_FOLDER',
+        '/tmp/uploads' if os.environ.get('VERCEL') else os.path.abspath('uploads')
+    )
+    if not os.path.isabs(UPLOAD_FOLDER):
+        UPLOAD_FOLDER = os.path.abspath(UPLOAD_FOLDER)
     MAX_CONTENT_LENGTH = int(os.environ.get('MAX_UPLOAD_MB', 500)) * 1024 * 1024
+
 
     ALLOWED_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png', 'webp', 'gif'}
     ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'webm', 'mov', 'mkv', 'avi'}

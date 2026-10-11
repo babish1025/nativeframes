@@ -149,18 +149,41 @@
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+{# Chart data passed via JSON blocks so the IDE JS linter never sees Jinja2 expressions #}
+<script type="application/json" id="chart-sessions-data">
+  {
+    "labels": {{ daily_labels|safe }},
+    "data":   {{ daily_data|safe }}
+  }
+</script>
+<script type="application/json" id="chart-uploads-data">
+  {
+    "labels": {{ upload_labels|safe }},
+    "data":   {{ upload_data|safe }}
+  }
+</script>
+
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    function parseChartData(id) {
+      var el = document.getElementById(id);
+      return el ? JSON.parse(el.textContent) : { labels: [], data: [] };
+    }
+
+    var sessions = parseChartData('chart-sessions-data');
+    var uploads  = parseChartData('chart-uploads-data');
+
     // Sessions chart
-    const sCtx = document.getElementById('sessionsChart')?.getContext('2d');
+    var sCtx = document.getElementById('sessionsChart');
     if (sCtx) {
-      new Chart(sCtx, {
+      new Chart(sCtx.getContext('2d'), {
         type: 'line',
         data: {
-          labels: {{ daily_labels|safe }},
+          labels: sessions.labels,
           datasets: [{
             label: 'Sessions',
-            data: {{ daily_data|safe }},
+            data: sessions.data,
             borderColor: '#D4AF37',
             backgroundColor: 'rgba(212, 175, 55, 0.1)',
             fill: true,
@@ -181,15 +204,15 @@
     }
 
     // Uploads chart
-    const uCtx = document.getElementById('uploadsChart')?.getContext('2d');
+    var uCtx = document.getElementById('uploadsChart');
     if (uCtx) {
-      new Chart(uCtx, {
+      new Chart(uCtx.getContext('2d'), {
         type: 'bar',
         data: {
-          labels: {{ upload_labels|safe }},
+          labels: uploads.labels,
           datasets: [{
             label: 'Uploaded Media',
-            data: {{ upload_data|safe }},
+            data: uploads.data,
             backgroundColor: '#3B82F6',
             borderRadius: 4
           }]

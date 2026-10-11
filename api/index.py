@@ -1,10 +1,15 @@
+"""
+NativeFrames — Vercel Serverless Entrypoint
+This module is the WSGI application callable that Vercel's Python runtime invokes.
+It must export a variable named `app` that is a WSGI callable.
+"""
 import os
 import sys
 
-# Add project root directory to path for serverless imports
+# Ensure the project root is on the path so `app` package is importable
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from run import app
+# Use production config on Vercel; fall back to development locally
+from app import create_app
 
-# Vercel entrypoint
-app = app
+app = create_app(os.environ.get('FLASK_ENV', 'production'))
