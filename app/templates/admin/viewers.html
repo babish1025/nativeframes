@@ -24,7 +24,7 @@
   </div>
 
   <!-- Summary Tiles -->
-  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.25rem;">
+  <div class="stats-grid">
     <div class="stat-card">
       <span class="stat-label">Total Sessions</span>
       <div class="stat-value" style="color:var(--nf-gold);">{{ total_sessions }}</div>
@@ -45,10 +45,10 @@
 
   <!-- Search & Filter Bar -->
   <div class="card" style="padding:1rem 1.25rem; background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:12px;">
-    <form method="GET" action="{{ url_for('admin.viewers') }}" style="display:flex; flex-wrap:wrap; gap:1rem; align-items:center; justify-content:space-between;">
+    <form method="GET" action="{{ url_for('admin.viewers') }}" class="viewers-filter-form" style="display:flex; flex-wrap:wrap; gap:1rem; align-items:center; justify-content:space-between;">
       
       <!-- Name Search -->
-      <div style="flex:1; min-width:220px;">
+      <div style="flex:1; min-width:180px;">
         <input type="text"
                name="q"
                value="{{ search }}"
@@ -57,7 +57,7 @@
                style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:0.6rem 1rem; font-size:0.875rem;" />
       </div>
 
-      <div style="display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center;">
+      <div class="filter-controls-wrap" style="display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center;">
         <!-- Status -->
         <select name="status" class="form-control" style="background:#18181c; border:1px solid rgba(255,255,255,0.1); color:#ddd; border-radius:8px; padding:0.55rem 0.75rem; font-size:0.85rem;" onchange="this.form.submit()">
           <option value="">All Statuses</option>
@@ -82,7 +82,7 @@
 
   <!-- Viewers Table -->
   <div class="card" style="background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px; overflow:hidden;">
-    <div style="overflow-x:auto;">
+    <div class="table-responsive" style="overflow-x:auto; -webkit-overflow-scrolling:touch; width:100%; touch-action:pan-x pan-y;">
       <table class="viewers-table" style="width:100%; border-collapse:collapse; font-size:0.875rem;">
         <thead>
           <tr style="color:var(--nf-text-dim); text-align:left; border-bottom:1px solid rgba(255,255,255,0.06); background:rgba(0,0,0,0.2);">
