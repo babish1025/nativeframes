@@ -117,9 +117,9 @@ def _ensure_upload_dirs(app: Flask):
 
 def _seed_defaults(app: Flask):
     """Create default admin account and app settings if they don't exist."""
-    # Default admin
-    admin = Admin.query.first()
-    if not admin:
+    # Default admin accounts
+    admins = Admin.query.all()
+    if not admins:
         admin = Admin(
             username     = app.config['ADMIN_USERNAME'],
             display_name = 'Native Frames Admin',
@@ -129,9 +129,10 @@ def _seed_defaults(app: Flask):
         db.session.commit()
         logger.info('Default admin account created: %s', app.config['ADMIN_USERNAME'])
     else:
-        admin.set_password(app.config['ADMIN_PASSWORD'])
+        for a in admins:
+            a.set_password(app.config['ADMIN_PASSWORD'])
         db.session.commit()
-        logger.info('Admin password synchronized with configuration.')
+        logger.info('Admin accounts password synchronized with configuration.')
 
     # Default settings
     defaults = {
