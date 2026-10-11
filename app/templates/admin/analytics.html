@@ -1,0 +1,210 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Analytics & Intelligence — NativeFrames Admin Studio{% endblock %}
+{% block breadcrumb %}Audience Analytics{% endblock %}
+
+{% block content %}
+<div style="display:flex; flex-direction:column; gap:2rem;">
+
+  <!-- Header & Period Filter -->
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <h1 style="font-size:1.75rem; font-weight:700; color:#fff; margin:0 0 0.25rem;">
+        Analytics & Insights
+      </h1>
+      <p style="color:var(--nf-text-dim); font-size:0.875rem; margin:0;">
+        Long-term engagement telemetry, viewer trends, and top-performing media assets.
+      </p>
+    </div>
+
+    <!-- Period Selector -->
+    <div style="display:flex; gap:0.5rem; background:#141418; padding:0.3rem; border-radius:10px; border:1px solid rgba(255,255,255,0.06);">
+      <a href="{{ url_for('admin.analytics', period='7') }}" class="btn btn-sm {% if period == '7' %}btn-primary{% else %}btn-ghost{% endif %}">Last 7 Days</a>
+      <a href="{{ url_for('admin.analytics', period='30') }}" class="btn btn-sm {% if period == '30' %}btn-primary{% else %}btn-ghost{% endif %}">Last 30 Days</a>
+      <a href="{{ url_for('admin.analytics', period='90') }}" class="btn btn-sm {% if period == '90' %}btn-primary{% else %}btn-ghost{% endif %}">Last 90 Days</a>
+    </div>
+  </div>
+
+  <!-- KPI Tiles -->
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1.25rem;">
+    <div class="stat-card">
+      <span class="stat-label">Total Impressions</span>
+      <div class="stat-value" style="color:var(--nf-gold);">{{ "{:,}".format(total_media_views) }}</div>
+      <div style="font-size:0.75rem; color:var(--nf-text-dim); margin-top:0.4rem;">Media views</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Viewer Sessions</span>
+      <div class="stat-value" style="color:#60a5fa;">{{ total_sessions }}</div>
+      <div style="font-size:0.75rem; color:var(--nf-text-dim); margin-top:0.4rem;">{{ unique_names }} unique guests</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Total Likes</span>
+      <div class="stat-value" style="color:#f472b6;">{{ total_likes }}</div>
+      <div style="font-size:0.75rem; color:var(--nf-text-dim); margin-top:0.4rem;">♥ Heart reactions</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Favourites</span>
+      <div class="stat-value" style="color:#fbbf24;">{{ total_favs }}</div>
+      <div style="font-size:0.75rem; color:var(--nf-text-dim); margin-top:0.4rem;">★ Saved to collections</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Storage Consumed</span>
+      <div class="stat-value" style="color:#34d399;">{{ storage_human }}</div>
+      <div style="font-size:0.75rem; color:var(--nf-text-dim); margin-top:0.4rem;">Active files</div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
+    <!-- Sessions Trend -->
+    <div class="card" style="padding:1.5rem; background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px;">
+      <h3 style="font-size:1rem; font-weight:600; color:#fff; margin:0 0 1.25rem;">Viewer Sessions Trend</h3>
+      <div style="height:260px; position:relative;">
+        <canvas id="sessionsChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Upload Trend -->
+    <div class="card" style="padding:1.5rem; background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px;">
+      <h3 style="font-size:1rem; font-weight:600; color:#fff; margin:0 0 1.25rem;">Upload Activity Volume</h3>
+      <div style="height:260px; position:relative;">
+        <canvas id="uploadsChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaderboards: Top Photos, Top Videos, Top Audio -->
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:1.5rem;">
+    
+    <!-- Top Photos -->
+    <div class="card" style="background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px; overflow:hidden;">
+      <div style="padding:1.25rem; border-bottom:1px solid rgba(255,255,255,0.06);">
+        <h3 style="font-size:1rem; font-weight:600; color:#fff; margin:0;">📸 Top Photographs</h3>
+      </div>
+      <div style="padding:0.5rem 1rem;">
+        {% if top_photos %}
+        {% for m in top_photos %}
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:0.6rem 0; border-bottom:1px solid rgba(255,255,255,0.03);">
+          <div style="display:flex; align-items:center; gap:0.6rem; overflow:hidden;">
+            <span style="font-size:0.8rem; font-weight:700; color:var(--nf-gold); width:18px;">#{{ loop.index }}</span>
+            <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:0.85rem; color:#fff; max-width:180px;">{{ m.title }}</div>
+          </div>
+          <div style="font-size:0.8rem; color:var(--nf-gold); font-weight:600;">👁 {{ m.view_count }}</div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div style="padding:1.5rem; text-align:center; color:var(--nf-text-dim); font-size:0.8rem;">No photo view data</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Top Videos -->
+    <div class="card" style="background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px; overflow:hidden;">
+      <div style="padding:1.25rem; border-bottom:1px solid rgba(255,255,255,0.06);">
+        <h3 style="font-size:1rem; font-weight:600; color:#fff; margin:0;">🎬 Top Motion Videos</h3>
+      </div>
+      <div style="padding:0.5rem 1rem;">
+        {% if top_videos %}
+        {% for m in top_videos %}
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:0.6rem 0; border-bottom:1px solid rgba(255,255,255,0.03);">
+          <div style="display:flex; align-items:center; gap:0.6rem; overflow:hidden;">
+            <span style="font-size:0.8rem; font-weight:700; color:#60a5fa; width:18px;">#{{ loop.index }}</span>
+            <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:0.85rem; color:#fff; max-width:180px;">{{ m.title }}</div>
+          </div>
+          <div style="font-size:0.8rem; color:#60a5fa; font-weight:600;">👁 {{ m.view_count }}</div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div style="padding:1.5rem; text-align:center; color:var(--nf-text-dim); font-size:0.8rem;">No video view data</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Top Audio -->
+    <div class="card" style="background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px; overflow:hidden;">
+      <div style="padding:1.25rem; border-bottom:1px solid rgba(255,255,255,0.06);">
+        <h3 style="font-size:1rem; font-weight:600; color:#fff; margin:0;">🎵 Top Music / Audio</h3>
+      </div>
+      <div style="padding:0.5rem 1rem;">
+        {% if top_audio %}
+        {% for m in top_audio %}
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:0.6rem 0; border-bottom:1px solid rgba(255,255,255,0.03);">
+          <div style="display:flex; align-items:center; gap:0.6rem; overflow:hidden;">
+            <span style="font-size:0.8rem; font-weight:700; color:#a78bfa; width:18px;">#{{ loop.index }}</span>
+            <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:0.85rem; color:#fff; max-width:180px;">{{ m.title }}</div>
+          </div>
+          <div style="font-size:0.8rem; color:#a78bfa; font-weight:600;">👁 {{ m.view_count }}</div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div style="padding:1.5rem; text-align:center; color:var(--nf-text-dim); font-size:0.8rem;">No audio play data</div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Sessions chart
+    const sCtx = document.getElementById('sessionsChart')?.getContext('2d');
+    if (sCtx) {
+      new Chart(sCtx, {
+        type: 'line',
+        data: {
+          labels: {{ daily_labels|safe }},
+          datasets: [{
+            label: 'Sessions',
+            data: {{ daily_data|safe }},
+            borderColor: '#D4AF37',
+            backgroundColor: 'rgba(212, 175, 55, 0.1)',
+            fill: true,
+            tension: 0.3,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#888', font: { size: 10 } } },
+            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#888', precision: 0 } }
+          }
+        }
+      });
+    }
+
+    // Uploads chart
+    const uCtx = document.getElementById('uploadsChart')?.getContext('2d');
+    if (uCtx) {
+      new Chart(uCtx, {
+        type: 'bar',
+        data: {
+          labels: {{ upload_labels|safe }},
+          datasets: [{
+            label: 'Uploaded Media',
+            data: {{ upload_data|safe }},
+            backgroundColor: '#3B82F6',
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#888', font: { size: 10 } } },
+            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#888', precision: 0 } }
+          }
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

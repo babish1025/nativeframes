@@ -1,0 +1,146 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Recycle Bin — NativeFrames Admin Studio{% endblock %}
+{% block breadcrumb %}Recycle Bin{% endblock %}
+
+{% block content %}
+<div style="display:flex; flex-direction:column; gap:1.5rem;">
+
+  <!-- Header & Actions -->
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <h1 style="font-size:1.75rem; font-weight:700; color:#fff; margin:0 0 0.25rem;">
+        Recycle Bin (Trash)
+      </h1>
+      <p style="color:var(--nf-text-dim); font-size:0.875rem; margin:0;">
+        Soft-deleted items are safely held here. You can restore them back to draft or permanently destroy them to free storage.
+      </p>
+    </div>
+    {% if media %}
+    <form method="POST" action="{{ url_for('admin.empty_trash') }}" onsubmit="return confirm('WARNING: This will permanently delete all files in the Recycle Bin and free disk space. This cannot be undone. Proceed?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <button type="submit" class="btn btn-ghost" style="color:#ef4444; border-color:rgba(239,68,68,0.3);">
+        🗑 Empty Recycle Bin
+      </button>
+    </form>
+    {% endif %}
+  </div>
+
+  <!-- Trash Table -->
+  <div class="card" style="background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px; overflow:hidden;">
+    <div style="overflow-x:auto;">
+      <table class="media-list-table" style="width:100%; border-collapse:collapse; font-size:0.875rem;">
+        <thead>
+          <tr style="color:var(--nf-text-dim); text-align:left; border-bottom:1px solid rgba(255,255,255,0.06); background:rgba(0,0,0,0.2);">
+            <th style="padding:0.85rem 1.25rem;">Thumbnail</th>
+            <th style="padding:0.85rem 1rem;">Asset Title</th>
+            <th style="padding:0.85rem 1rem;">Type</th>
+            <th style="padding:0.85rem 1rem;">File Size</th>
+            <th style="padding:0.85rem 1rem;">Deleted Date</th>
+            <th style="padding:0.85rem 1.25rem; text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if media %}
+          {% for m in media %}
+          <tr class="media-list-row" style="border-bottom:1px solid rgba(255,255,255,0.03);">
+            <!-- Thumb -->
+            <td style="padding:0.85rem 1.25rem; width:72px;">
+              <div style="width:56px; height:42px; border-radius:6px; overflow:hidden; background:#1c1c20; opacity:0.6;">
+                {% if m.thumbnail_path %}
+                <img src="{{ url_for('uploaded_file', filename=m.thumbnail_path) }}" alt="" style="width:100%; height:100%; object-fit:cover;" />
+                {% elif m.media_type == 'photo' %}
+                <img src="{{ url_for('uploaded_file', filename=m.storage_path) }}" alt="" style="width:100%; height:100%; object-fit:cover;" />
+                {% else %}
+                <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">
+                  {% if m.media_type == 'video' %}🎬{% else %}🎵{% endif %}
+                </div>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- Title -->
+            <td style="padding:0.85rem 1rem; max-width:280px;">
+              <div style="font-weight:600; color:#ddd; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                {{ m.title }}
+              </div>
+              <div style="font-size:0.75rem; color:var(--nf-text-dim);">
+                Originally uploaded {{ m.created_at.strftime('%b %d, %Y') if m.created_at else '—' }}
+              </div>
+            </td>
+
+            <!-- Type -->
+            <td style="padding:0.85rem 1rem;">
+              <span class="media-type-badge {{ m.media_type }}" style="font-size:0.7rem; font-weight:700; text-transform:uppercase; padding:0.2rem 0.5rem; border-radius:4px; opacity:0.7;">
+                {{ m.media_type }}
+              </span>
+            </td>
+
+            <!-- Size -->
+            <td style="padding:0.85rem 1rem; color:var(--nf-text-dim);">
+              {{ human_filesize(m.file_size or 0) }}
+            </td>
+
+            <!-- Deleted Date -->
+            <td style="padding:0.85rem 1rem; color:var(--nf-text-dim); font-size:0.8rem;">
+              {{ m.deleted_at.strftime('%b %d, %Y %H:%M') if m.deleted_at else '—' }}
+            </td>
+
+            <!-- Actions -->
+            <td style="padding:0.85rem 1.25rem; text-align:right;">
+              <div style="display:inline-flex; gap:0.5rem;">
+                <!-- Restore -->
+                <form method="POST" action="{{ url_for('admin.restore_media', media_id=m.id) }}" style="display:inline;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  <button type="submit" class="btn btn-ghost btn-sm" style="color:#34d399; font-size:0.75rem; padding:0.3rem 0.75rem;">
+                    ↺ Restore
+                  </button>
+                </form>
+
+                <!-- Destroy -->
+                <form method="POST" action="{{ url_for('admin.destroy_media', media_id=m.id) }}" style="display:inline;" onsubmit="return confirm('Permanently destroy this file from storage?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  <button type="submit" class="btn btn-ghost btn-sm" style="color:#ef4444; font-size:0.75rem; padding:0.3rem 0.75rem;">
+                    ✕ Destroy
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% else %}
+          <tr>
+            <td colspan="6" style="padding:4rem; text-align:center; color:var(--nf-text-dim);">
+              <div style="font-size:2.5rem; margin-bottom:0.5rem; opacity:0.5;">🗑️</div>
+              <div style="font-size:1.1rem; color:#fff; font-weight:600;">Recycle Bin is empty</div>
+              <p style="margin:0.25rem 0 0; font-size:0.85rem;">Deleted items will appear here before permanent purging.</p>
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination.pages > 1 %}
+    <div style="padding:1rem 1.5rem; border-top:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:0.8rem; color:var(--nf-text-dim);">
+        Showing {{ pagination.items|length }} of {{ pagination.total }} items
+      </span>
+      <div style="display:flex; gap:0.5rem;">
+        {% if pagination.has_prev %}
+        <a href="{{ url_for('admin.trash', page=pagination.prev_num) }}" class="btn btn-ghost btn-sm">‹ Prev</a>
+        {% endif %}
+        <span style="font-size:0.85rem; color:#fff; padding:0.25rem 0.5rem; display:flex; align-items:center;">
+          {{ pagination.page }} / {{ pagination.pages }}
+        </span>
+        {% if pagination.has_next %}
+        <a href="{{ url_for('admin.trash', page=pagination.next_num) }}" class="btn btn-ghost btn-sm">Next ›</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

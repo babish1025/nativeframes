@@ -1,0 +1,264 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Folders & Collections — NativeFrames Admin Studio{% endblock %}
+{% block breadcrumb %}Folders & Collections{% endblock %}
+
+{% block content %}
+<div style="display:flex; flex-direction:column; gap:2rem;">
+
+  <!-- Header & Create Action -->
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <h1 style="font-size:1.75rem; font-weight:700; color:#fff; margin:0 0 0.25rem;">
+        Folders & Collections
+      </h1>
+      <p style="color:var(--nf-text-dim); font-size:0.875rem; margin:0;">
+        Organize media into curated albums, subfolders, and thematic private collections.
+      </p>
+    </div>
+    <button class="btn btn-primary" onclick="openCreateModal()" style="display:flex; align-items:center; gap:0.5rem;">
+      <span>＋</span> New Folder
+    </button>
+  </div>
+
+  <!-- Folders Grid -->
+  {% if folders %}
+  <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:1.25rem;">
+    {% for f in folders %}
+    <div class="card" style="padding:1.25rem; background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px; display:flex; flex-direction:column; justify-content:space-between; transition:border-color 0.2s;">
+      
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
+          <div style="display:flex; align-items:center; gap:0.75rem;">
+            <div style="width:42px; height:42px; border-radius:10px; background:rgba(212,175,55,0.1); border:1px solid rgba(212,175,55,0.25); display:flex; align-items:center; justify-content:center; font-size:1.4rem;">
+              📁
+            </div>
+            <div>
+              <h3 style="font-size:1.05rem; font-weight:600; color:#fff; margin:0 0 0.15rem;">{{ f.name }}</h3>
+              {% if f.parent %}
+              <div style="font-size:0.75rem; color:var(--nf-gold);">Subfolder of: {{ f.parent.name }}</div>
+              {% else %}
+              <div style="font-size:0.75rem; color:var(--nf-text-dim);">Root Collection</div>
+              {% endif %}
+            </div>
+          </div>
+          <span class="badge {% if f.visibility_status == 'published' %}badge-gold{% else %}badge-ghost{% endif %}" style="font-size:0.7rem;">
+            {{ f.visibility_status }}
+          </span>
+        </div>
+
+        {% if f.description %}
+        <p style="font-size:0.85rem; color:#aaa; margin:0 0 1rem; line-height:1.5;">
+          {{ f.description }}
+        </p>
+        {% endif %}
+      </div>
+
+      <div style="border-top:1px solid rgba(255,255,255,0.06); padding-top:0.75rem; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:0.8rem; color:var(--nf-text-dim);">
+          {{ f.media.filter_by(deleted_at=None).count() }} media frames
+        </span>
+
+        <div style="display:flex; gap:0.4rem;">
+          <a href="{{ url_for('gallery.folder_view', folder_id=f.id) }}" target="_blank" class="btn btn-ghost btn-sm" style="padding:0.25rem 0.5rem; font-size:0.75rem;" title="View in Gallery">
+            👁 View
+          </a>
+          <button class="btn btn-ghost btn-sm" style="padding:0.25rem 0.5rem; font-size:0.75rem;" onclick='openEditModal({{ f.id }}, {{ f.name|tojson }}, {{ (f.description or "")|tojson }}, {{ f.parent_id or "null" }}, {{ f.visibility_status|tojson }})'>
+            Edit
+          </button>
+          <button class="btn btn-ghost btn-sm" style="padding:0.25rem 0.5rem; font-size:0.75rem; color:#ef4444;" onclick='openDeleteModal({{ f.id }}, {{ f.name|tojson }})'>
+            Delete
+          </button>
+        </div>
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align:center; padding:4rem 1rem; background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:16px;">
+    <div style="font-size:3rem; margin-bottom:1rem; opacity:0.6;">📁</div>
+    <h3 style="font-size:1.25rem; color:#fff; font-weight:600; margin-bottom:0.5rem;">No Collections Created</h3>
+    <p style="color:var(--nf-text-dim); max-width:400px; margin:0 auto 1.5rem; font-size:0.9rem;">
+      Create folders to categorize your photographs, motion footage, and music tracks into distinct curated albums.
+    </p>
+    <button class="btn btn-primary" onclick="openCreateModal()">Create First Folder</button>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- ===================== MODAL: CREATE FOLDER ===================== -->
+<div id="create-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:100; align-items:center; justify-content:center; padding:1.5rem;">
+  <div class="card" style="width:100%; max-width:500px; background:#141418; border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:2rem; box-shadow:0 24px 60px rgba(0,0,0,0.8);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+      <h3 style="font-size:1.25rem; font-weight:600; color:#fff; margin:0;">Create New Folder</h3>
+      <button class="btn btn-ghost btn-sm" onclick="closeCreateModal()" style="padding:0.25rem 0.5rem;">✕</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin.create_folder') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      
+      <div style="display:flex; flex-direction:column; gap:1.25rem; margin-bottom:1.5rem;">
+        <div>
+          <label class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">Folder Name *</label>
+          <input type="text" name="name" required placeholder="e.g. Cinematic Landscapes" class="form-control" style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:0.75rem 1rem;" />
+        </div>
+
+        <div>
+          <label class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">Description</label>
+          <textarea name="description" rows="3" placeholder="Brief note on what this album contains…" class="form-control" style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:0.75rem 1rem;"></textarea>
+        </div>
+
+        <div>
+          <label class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">Parent Folder (Optional)</label>
+          <select name="parent_id" class="form-control" style="width:100%; background:#18181c; border:1px solid rgba(255,255,255,0.1); color:#ddd; border-radius:8px; padding:0.75rem 1rem;">
+            <option value="">None (Top-level folder)</option>
+            {% for f in folders %}
+            <option value="{{ f.id }}">{{ f.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">Visibility</label>
+          <select name="visibility" class="form-control" style="width:100%; background:#18181c; border:1px solid rgba(255,255,255,0.1); color:#ddd; border-radius:8px; padding:0.75rem 1rem;">
+            <option value="published">Published</option>
+            <option value="hidden">Hidden</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
+        <button type="button" class="btn btn-ghost" onclick="closeCreateModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Folder</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== MODAL: EDIT FOLDER ===================== -->
+<div id="edit-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:100; align-items:center; justify-content:center; padding:1.5rem;">
+  <div class="card" style="width:100%; max-width:500px; background:#141418; border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:2rem; box-shadow:0 24px 60px rgba(0,0,0,0.8);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+      <h3 style="font-size:1.25rem; font-weight:600; color:#fff; margin:0;">Edit Folder</h3>
+      <button class="btn btn-ghost btn-sm" onclick="closeEditModal()" style="padding:0.25rem 0.5rem;">✕</button>
+    </div>
+
+    <form method="POST" id="edit-folder-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      
+      <div style="display:flex; flex-direction:column; gap:1.25rem; margin-bottom:1.5rem;">
+        <div>
+          <label class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">Folder Name *</label>
+          <input type="text" name="name" id="edit-name" required class="form-control" style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:0.75rem 1rem;" />
+        </div>
+
+        <div>
+          <label class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">Description</label>
+          <textarea name="description" id="edit-description" rows="3" class="form-control" style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:0.75rem 1rem;"></textarea>
+        </div>
+
+        <div>
+          <label class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">Parent Folder</label>
+          <select name="parent_id" id="edit-parent-id" class="form-control" style="width:100%; background:#18181c; border:1px solid rgba(255,255,255,0.1); color:#ddd; border-radius:8px; padding:0.75rem 1rem;">
+            <option value="">None (Top-level folder)</option>
+            {% for f in folders %}
+            <option value="{{ f.id }}">{{ f.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">Visibility</label>
+          <select name="visibility" id="edit-visibility" class="form-control" style="width:100%; background:#18181c; border:1px solid rgba(255,255,255,0.1); color:#ddd; border-radius:8px; padding:0.75rem 1rem;">
+            <option value="published">Published</option>
+            <option value="hidden">Hidden</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
+        <button type="button" class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== MODAL: DELETE FOLDER ===================== -->
+<div id="delete-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:100; align-items:center; justify-content:center; padding:1.5rem;">
+  <div class="card" style="width:100%; max-width:480px; background:#141418; border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:2rem; box-shadow:0 24px 60px rgba(0,0,0,0.8);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+      <h3 style="font-size:1.25rem; font-weight:600; color:#fff; margin:0;">Delete Folder</h3>
+      <button class="btn btn-ghost btn-sm" onclick="closeDeleteModal()" style="padding:0.25rem 0.5rem;">✕</button>
+    </div>
+
+    <form method="POST" id="delete-folder-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      
+      <p style="font-size:0.9rem; color:#ddd; margin:0 0 1.25rem;">
+        Are you sure you want to delete folder <strong id="delete-folder-name" style="color:var(--nf-gold);"></strong>?
+      </p>
+
+      <div style="display:flex; flex-direction:column; gap:0.75rem; margin-bottom:1.5rem;">
+        <label style="display:flex; align-items:flex-start; gap:0.5rem; cursor:pointer;">
+          <input type="radio" name="action" value="trash_contents" checked style="margin-top:0.25rem;" />
+          <div>
+            <div style="font-size:0.875rem; color:#fff; font-weight:500;">Move folder contents to Recycle Bin</div>
+            <div style="font-size:0.75rem; color:var(--nf-text-dim);">Files can be restored later from the Recycle Bin.</div>
+          </div>
+        </label>
+
+        <label style="display:flex; align-items:flex-start; gap:0.5rem; cursor:pointer;">
+          <input type="radio" name="action" value="unassign" style="margin-top:0.25rem;" />
+          <div>
+            <div style="font-size:0.875rem; color:#fff; font-weight:500;">Keep media files (move to top level)</div>
+            <div style="font-size:0.75rem; color:var(--nf-text-dim);">Media items remain published without a folder assignment.</div>
+          </div>
+        </label>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
+        <button type="button" class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" style="background:#ef4444; border-color:#ef4444;">Delete Folder</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function openCreateModal() {
+    document.getElementById('create-modal').style.display = 'flex';
+  }
+  function closeCreateModal() {
+    document.getElementById('create-modal').style.display = 'none';
+  }
+
+  function openEditModal(id, name, desc, parentId, visibility) {
+    const form = document.getElementById('edit-folder-form');
+    form.action = '/admin/folders/' + id + '/edit';
+    document.getElementById('edit-name').value = name;
+    document.getElementById('edit-description').value = desc || '';
+    document.getElementById('edit-parent-id').value = parentId || '';
+    document.getElementById('edit-visibility').value = visibility || 'published';
+    document.getElementById('edit-modal').style.display = 'flex';
+  }
+  function closeEditModal() {
+    document.getElementById('edit-modal').style.display = 'none';
+  }
+
+  function openDeleteModal(id, name) {
+    const form = document.getElementById('delete-folder-form');
+    form.action = '/admin/folders/' + id + '/delete';
+    document.getElementById('delete-folder-name').textContent = '"' + name + '"';
+    document.getElementById('delete-modal').style.display = 'flex';
+  }
+  function closeDeleteModal() {
+    document.getElementById('delete-modal').style.display = 'none';
+  }
+</script>
+{% endblock %}

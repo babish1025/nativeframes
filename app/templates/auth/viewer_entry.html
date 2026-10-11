@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="csrf-token" content="{{ csrf_token() }}" />
+  <title>Viewer Entry — NativeFrames</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+  <link rel="icon" href="{{ url_for('static', filename='images/nativeframes-logo.jpg') }}" type="image/jpeg" />
+</head>
+<body>
+
+<div class="viewer-entry-page" role="main">
+  <div class="viewer-entry-bg-dots" aria-hidden="true"></div>
+
+  <div class="viewer-entry-card">
+
+    <img class="viewer-entry-logo"
+         src="{{ url_for('static', filename='images/nativeframes-logo.jpg') }}"
+         alt="NativeFrames" />
+
+    <h1 class="viewer-entry-heading">Welcome to NATIVEFRAMES</h1>
+    <p class="viewer-entry-sub">Every frame tells a story.</p>
+
+    {% if error %}
+    <div class="alert alert-error" style="margin-bottom:1.25rem;text-align:left;">
+      <span class="alert-icon">✕</span>
+      <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('auth.viewer_entry') }}" id="viewer-entry-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <input
+        class="viewer-entry-input"
+        type="text"
+        name="name"
+        id="viewer-name"
+        placeholder="Enter your name"
+        maxlength="100"
+        required
+        autofocus
+        autocomplete="name"
+        aria-label="Your name"
+      />
+      <button type="submit" class="viewer-entry-btn" id="enter-btn">
+        Enter Gallery
+      </button>
+    </form>
+
+    <p class="viewer-entry-note">
+      By entering, you acknowledge that NativeFrames tracks your viewing session
+      for gallery analytics. Your name is used as a display identity only.
+    </p>
+
+    <div style="margin-top:1.5rem;border-top:1px solid var(--nf-border);padding-top:1rem;">
+      <a href="{{ url_for('index') }}" style="font-size:.8rem;color:var(--nf-text-dim);">← Back to home</a>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+  // Prevent double-submit
+  document.getElementById('viewer-entry-form').addEventListener('submit', function() {
+    document.getElementById('enter-btn').disabled = true;
+    document.getElementById('enter-btn').textContent = 'Entering…';
+  });
+</script>
+</body>
+</html>

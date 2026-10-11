@@ -1,0 +1,169 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Viewer Activity — NativeFrames Admin Studio{% endblock %}
+{% block breadcrumb %}Audience & Viewers{% endblock %}
+
+{% block content %}
+<div style="display:flex; flex-direction:column; gap:1.5rem;">
+
+  <!-- Header & Actions -->
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <h1 style="font-size:1.75rem; font-weight:700; color:#fff; margin:0 0 0.25rem;">
+        Viewer Sessions & Logs
+      </h1>
+      <p style="color:var(--nf-text-dim); font-size:0.875rem; margin:0;">
+        Track individual viewer identities, access timestamps, network telemetry, and detailed engagement activity.
+      </p>
+    </div>
+    <div style="display:flex; gap:0.75rem;">
+      <a href="{{ url_for('admin.export_viewers', q=search, date_from=date_from, date_to=date_to) }}" class="btn btn-ghost" style="display:flex; align-items:center; gap:0.4rem;">
+        <span>📥</span> Export CSV
+      </a>
+    </div>
+  </div>
+
+  <!-- Summary Tiles -->
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.25rem;">
+    <div class="stat-card">
+      <span class="stat-label">Total Sessions</span>
+      <div class="stat-value" style="color:var(--nf-gold);">{{ total_sessions }}</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Active Right Now</span>
+      <div class="stat-value" style="color:#34d399;">{{ active_sessions }}</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Unique Names</span>
+      <div class="stat-value" style="color:#60a5fa;">{{ unique_names }}</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Today's Entries</span>
+      <div class="stat-value" style="color:#f472b6;">{{ today_sessions }}</div>
+    </div>
+  </div>
+
+  <!-- Search & Filter Bar -->
+  <div class="card" style="padding:1rem 1.25rem; background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:12px;">
+    <form method="GET" action="{{ url_for('admin.viewers') }}" style="display:flex; flex-wrap:wrap; gap:1rem; align-items:center; justify-content:space-between;">
+      
+      <!-- Name Search -->
+      <div style="flex:1; min-width:220px;">
+        <input type="text"
+               name="q"
+               value="{{ search }}"
+               placeholder="Search viewer name…"
+               class="form-control"
+               style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:0.6rem 1rem; font-size:0.875rem;" />
+      </div>
+
+      <div style="display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center;">
+        <!-- Status -->
+        <select name="status" class="form-control" style="background:#18181c; border:1px solid rgba(255,255,255,0.1); color:#ddd; border-radius:8px; padding:0.55rem 0.75rem; font-size:0.85rem;" onchange="this.form.submit()">
+          <option value="">All Statuses</option>
+          <option value="active" {% if filter_status == 'active' %}selected{% endif %}>Active</option>
+          <option value="ended" {% if filter_status == 'ended' %}selected{% endif %}>Ended</option>
+        </select>
+
+        <!-- Date From -->
+        <input type="date" name="date_from" value="{{ date_from }}" class="form-control" style="background:#18181c; border:1px solid rgba(255,255,255,0.1); color:#ddd; border-radius:8px; padding:0.55rem 0.75rem; font-size:0.85rem;" title="Date from" />
+
+        <!-- Date To -->
+        <input type="date" name="date_to" value="{{ date_to }}" class="form-control" style="background:#18181c; border:1px solid rgba(255,255,255,0.1); color:#ddd; border-radius:8px; padding:0.55rem 0.75rem; font-size:0.85rem;" title="Date to" />
+
+        <button type="submit" class="btn btn-ghost btn-sm" style="padding:0.55rem 1rem;">Filter</button>
+        {% if search or filter_status or date_from or date_to %}
+        <a href="{{ url_for('admin.viewers') }}" class="btn btn-ghost btn-sm" style="color:var(--nf-gold);">Reset</a>
+        {% endif %}
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Viewers Table -->
+  <div class="card" style="background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px; overflow:hidden;">
+    <div style="overflow-x:auto;">
+      <table class="viewers-table" style="width:100%; border-collapse:collapse; font-size:0.875rem;">
+        <thead>
+          <tr style="color:var(--nf-text-dim); text-align:left; border-bottom:1px solid rgba(255,255,255,0.06); background:rgba(0,0,0,0.2);">
+            <th style="padding:0.85rem 1.25rem;">Viewer Name</th>
+            <th style="padding:0.85rem 1rem;">IP Address</th>
+            <th style="padding:0.85rem 1rem;">Browser / Agent</th>
+            <th style="padding:0.85rem 1rem;">Status</th>
+            <th style="padding:0.85rem 1rem;">Logged In</th>
+            <th style="padding:0.85rem 1rem;">Last Active</th>
+            <th style="padding:0.85rem 1rem;">Events</th>
+            <th style="padding:0.85rem 1.25rem; text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if sessions %}
+          {% for s in sessions %}
+          <tr class="session-row" style="border-bottom:1px solid rgba(255,255,255,0.03);">
+            <td style="padding:0.85rem 1.25rem; font-weight:600; color:#fff;">
+              <span style="color:{% if s.session_status == 'active' %}#34d399{% else %}var(--nf-text-dim){% endif %}; margin-right:0.35rem;">●</span>
+              {{ s.display_name }}
+            </td>
+            <td style="padding:0.85rem 1rem; color:var(--nf-text-dim); font-family:monospace; font-size:0.8rem;">
+              {{ s.ip_address or '—' }}
+            </td>
+            <td style="padding:0.85rem 1rem; color:var(--nf-text-dim); max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ s.user_agent }}">
+              {{ s.user_agent or 'Unknown' }}
+            </td>
+            <td style="padding:0.85rem 1rem;">
+              <span class="badge {% if s.session_status == 'active' %}badge-gold{% else %}badge-ghost{% endif %}" style="font-size:0.7rem;">
+                {{ s.session_status }}
+              </span>
+            </td>
+            <td style="padding:0.85rem 1rem; color:var(--nf-text-dim); font-size:0.8rem;">
+              {{ s.created_at.strftime('%b %d, %H:%M') if s.created_at else '—' }}
+            </td>
+            <td style="padding:0.85rem 1rem; color:var(--nf-text-dim); font-size:0.8rem;">
+              {{ s.last_activity_at.strftime('%H:%M:%S') if s.last_activity_at else '—' }}
+            </td>
+            <td style="padding:0.85rem 1rem; font-weight:600; color:#fff;">
+              {{ s.events.count() }}
+            </td>
+            <td style="padding:0.85rem 1.25rem; text-align:right;">
+              <a href="{{ url_for('admin.viewer_events', session_id=s.id) }}" class="btn btn-ghost btn-sm" style="padding:0.3rem 0.6rem; font-size:0.75rem;">
+                Audit Timeline →
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+          {% else %}
+          <tr>
+            <td colspan="8" style="padding:3.5rem; text-align:center; color:var(--nf-text-dim);">
+              <div style="font-size:2rem; margin-bottom:0.5rem;">👥</div>
+              <div style="font-size:1rem; color:#fff; font-weight:600;">No viewer sessions recorded</div>
+              <p style="margin:0.25rem 0; font-size:0.85rem;">Viewer entries will appear here once visitors start browsing the gallery.</p>
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination.pages > 1 %}
+    <div style="padding:1rem 1.5rem; border-top:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:0.8rem; color:var(--nf-text-dim);">
+        Showing {{ pagination.items|length }} of {{ pagination.total }} sessions
+      </span>
+      <div style="display:flex; gap:0.5rem;">
+        {% if pagination.has_prev %}
+        <a href="{{ url_for('admin.viewers', page=pagination.prev_num, q=search, status=filter_status, date_from=date_from, date_to=date_to) }}" class="btn btn-ghost btn-sm">‹ Prev</a>
+        {% endif %}
+        <span style="font-size:0.85rem; color:#fff; padding:0.25rem 0.5rem; display:flex; align-items:center;">
+          {{ pagination.page }} / {{ pagination.pages }}
+        </span>
+        {% if pagination.has_next %}
+        <a href="{{ url_for('admin.viewers', page=pagination.next_num, q=search, status=filter_status, date_from=date_from, date_to=date_to) }}" class="btn btn-ghost btn-sm">Next ›</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,226 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Upload Media — NativeFrames Admin Studio{% endblock %}
+{% block breadcrumb %}Upload Media{% endblock %}
+
+{% block content %}
+<div style="max-width:860px; margin:0 auto;">
+
+  <!-- Header -->
+  <div style="margin-bottom:2rem;">
+    <h1 style="font-size:1.75rem; font-weight:700; color:#fff; margin:0 0 0.25rem;">
+      Upload Media Asset
+    </h1>
+    <p style="color:var(--nf-text-dim); font-size:0.875rem; margin:0;">
+      Add high-resolution photography, motion video, or music audio tracks to the gallery.
+    </p>
+  </div>
+
+  <form method="POST" action="{{ url_for('admin.upload_media') }}" enctype="multipart/form-data" id="upload-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+    <!-- Type Selection Selector Cards -->
+    <div style="margin-bottom:1.5rem;">
+      <label class="form-label" style="display:block; font-size:0.85rem; color:#fff; font-weight:600; margin-bottom:0.75rem;">
+        Asset Type <span style="color:var(--nf-gold);">*</span>
+      </label>
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:1rem;">
+        <label class="card" style="padding:1rem; cursor:pointer; text-align:center; background:#141418; border:1px solid rgba(255,255,255,0.08); border-radius:10px; transition:border-color 0.2s;" id="label-type-photo">
+          <input type="radio" name="media_type" value="photo" checked style="display:none;" onchange="updateMediaType('photo')" />
+          <div style="font-size:1.8rem; margin-bottom:0.3rem;">📸</div>
+          <div style="font-weight:600; color:#fff; font-size:0.9rem;">Photograph</div>
+          <div style="font-size:0.75rem; color:var(--nf-text-dim);">JPG, PNG, WEBP, GIF</div>
+        </label>
+
+        <label class="card" style="padding:1rem; cursor:pointer; text-align:center; background:#141418; border:1px solid rgba(255,255,255,0.08); border-radius:10px; transition:border-color 0.2s;" id="label-type-video">
+          <input type="radio" name="media_type" value="video" style="display:none;" onchange="updateMediaType('video')" />
+          <div style="font-size:1.8rem; margin-bottom:0.3rem;">🎬</div>
+          <div style="font-weight:600; color:#fff; font-size:0.9rem;">Motion Video</div>
+          <div style="font-size:0.75rem; color:var(--nf-text-dim);">MP4, WEBM, MOV</div>
+        </label>
+
+        <label class="card" style="padding:1rem; cursor:pointer; text-align:center; background:#141418; border:1px solid rgba(255,255,255,0.08); border-radius:10px; transition:border-color 0.2s;" id="label-type-audio">
+          <input type="radio" name="media_type" value="audio" style="display:none;" onchange="updateMediaType('audio')" />
+          <div style="font-size:1.8rem; margin-bottom:0.3rem;">🎵</div>
+          <div style="font-weight:600; color:#fff; font-size:0.9rem;">Audio / Music</div>
+          <div style="font-size:0.75rem; color:var(--nf-text-dim);">MP3, WAV, OGG, FLAC</div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Dropzone Card -->
+    <div class="card" style="padding:2.5rem 1.5rem; text-align:center; background:#121215; border:2px dashed rgba(212,175,55,0.3); border-radius:14px; margin-bottom:1.5rem; cursor:pointer;" id="dropzone" onclick="document.getElementById('media_file').click()">
+      <div style="font-size:2.5rem; margin-bottom:0.75rem;">⬆️</div>
+      <div style="font-size:1.1rem; font-weight:600; color:#fff; margin-bottom:0.25rem;">
+        Click to select file or drag & drop here
+      </div>
+      <div style="font-size:0.8rem; color:var(--nf-text-dim); margin-bottom:1rem;" id="dropzone-hint">
+        Supports JPG, PNG, WEBP, GIF up to 500MB
+      </div>
+      <div id="file-chosen-name" style="display:none; font-size:0.9rem; color:var(--nf-gold); font-weight:600; background:rgba(212,175,55,0.1); padding:0.5rem 1rem; border-radius:8px; display:inline-block;">
+        No file selected
+      </div>
+      <input type="file" name="media_file" id="media_file" required style="display:none;" onchange="handleFileSelected(this)" />
+    </div>
+
+    <!-- Metadata Fields Card -->
+    <div class="card" style="padding:1.5rem; background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px; margin-bottom:1.5rem;">
+      <h3 style="font-size:1rem; font-weight:600; color:#fff; margin:0 0 1.25rem; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:0.75rem;">
+        Asset Metadata & Information
+      </h3>
+
+      <div style="display:grid; grid-template-columns:1fr; gap:1.25rem;">
+        <!-- Title -->
+        <div>
+          <label for="title" class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">
+            Title <span style="color:var(--nf-gold);">*</span>
+          </label>
+          <input type="text" name="title" id="title" required placeholder="e.g. Sunset Over Amalfi Coast" class="form-control" style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:0.75rem 1rem;" />
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label for="description" class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">
+            Description
+          </label>
+          <textarea name="description" id="description" rows="3" placeholder="Context, narrative, location, camera details…" class="form-control" style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:0.75rem 1rem; font-family:inherit;"></textarea>
+        </div>
+
+        <!-- Two Columns: Folder & Artist -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem;">
+          <div>
+            <label for="folder_id" class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">
+              Folder / Collection
+            </label>
+            <select name="folder_id" id="folder_id" class="form-control" style="width:100%; background:#18181c; border:1px solid rgba(255,255,255,0.1); color:#ddd; border-radius:8px; padding:0.75rem 1rem;">
+              <option value="">(No folder — Top Level)</option>
+              {% for f in folders %}
+              <option value="{{ f.id }}">📁 {{ f.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div id="artist-wrap">
+            <label for="artist" class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">
+              Artist / Creator
+            </label>
+            <input type="text" name="artist" id="artist" placeholder="e.g. Hans Zimmer" class="form-control" style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:0.75rem 1rem;" />
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div>
+          <label for="tags" class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">
+            Tags <span style="font-size:0.75rem; color:var(--nf-text-dim);">(comma separated)</span>
+          </label>
+          <input type="text" name="tags" id="tags" placeholder="e.g. nature, 4k, cinematic, dusk" class="form-control" style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:0.75rem 1rem;" />
+        </div>
+
+        <!-- Custom Thumbnail (Optional for video/audio) -->
+        <div>
+          <label for="thumbnail_file" class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">
+            Cover Artwork / Poster Image <span style="font-size:0.75rem; color:var(--nf-text-dim);">(optional, JPG/PNG)</span>
+          </label>
+          <input type="file" name="thumbnail_file" id="thumbnail_file" accept=".jpg,.jpeg,.png,.webp" class="form-control" style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:0.6rem 1rem;" />
+        </div>
+
+        <!-- Publishing Status -->
+        <div style="display:flex; align-items:center; justify-content:space-between; padding-top:0.75rem; border-top:1px solid rgba(255,255,255,0.06);">
+          <div>
+            <div style="font-size:0.9rem; font-weight:600; color:#fff;">Publish Immediately</div>
+            <div style="font-size:0.75rem; color:var(--nf-text-dim);">When enabled, frame becomes visible to viewers immediately.</div>
+          </div>
+          <div>
+            <select name="status" class="form-control" style="background:#18181c; border:1px solid rgba(255,255,255,0.1); color:#ddd; border-radius:8px; padding:0.5rem 1rem;">
+              <option value="published">Published</option>
+              <option value="draft">Save as Draft</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Submit Bar -->
+    <div style="display:flex; justify-content:flex-end; gap:1rem;">
+      <a href="{{ url_for('admin.media_library') }}" class="btn btn-ghost">Cancel</a>
+      <button type="submit" class="btn btn-primary" id="submit-btn" style="padding:0.75rem 2rem;">
+        Upload & Save Frame
+      </button>
+    </div>
+
+  </form>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function updateMediaType(type) {
+    document.querySelectorAll('[id^="label-type-"]').forEach(el => {
+      el.style.borderColor = 'rgba(255,255,255,0.08)';
+      el.style.background = '#141418';
+    });
+    const selectedLabel = document.getElementById('label-type-' + type);
+    if (selectedLabel) {
+      selectedLabel.style.borderColor = 'var(--nf-gold)';
+      selectedLabel.style.background = 'rgba(212,175,55,0.05)';
+    }
+
+    const hints = {
+      photo: 'Supports JPG, PNG, WEBP, GIF (up to 500MB)',
+      video: 'Supports MP4, WEBM, MOV (up to 500MB)',
+      audio: 'Supports MP3, WAV, OGG, FLAC (up to 500MB)'
+    };
+    document.getElementById('dropzone-hint').textContent = hints[type] || '';
+  }
+
+  function handleFileSelected(input) {
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const badge = document.getElementById('file-chosen-name');
+      badge.textContent = 'Selected: ' + file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
+      badge.style.display = 'inline-block';
+      
+      const titleInput = document.getElementById('title');
+      if (!titleInput.value) {
+        const cleanName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+        titleInput.value = cleanName.replace(/[-_]/g, ' ');
+      }
+    }
+  }
+
+  // Drag and drop events
+  const dropzone = document.getElementById('dropzone');
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = 'var(--nf-gold)';
+      dropzone.style.background = 'rgba(212,175,55,0.08)';
+    });
+  });
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = 'rgba(212,175,55,0.3)';
+      dropzone.style.background = '#121215';
+    });
+  });
+  dropzone.addEventListener('drop', (e) => {
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const fileInput = document.getElementById('media_file');
+      fileInput.files = e.dataTransfer.files;
+      handleFileSelected(fileInput);
+    }
+  });
+
+  document.getElementById('upload-form').addEventListener('submit', function() {
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Uploading & Processing…';
+  });
+
+  // Init
+  updateMediaType('photo');
+</script>
+{% endblock %}

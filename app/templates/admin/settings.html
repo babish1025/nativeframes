@@ -1,0 +1,150 @@
+{% extends "base_admin.html" %}
+
+{% block title %}System Settings — NativeFrames Admin Studio{% endblock %}
+{% block breadcrumb %}Platform Settings{% endblock %}
+
+{% block content %}
+<div style="max-width:860px; margin:0 auto; display:flex; flex-direction:column; gap:2rem;">
+
+  <!-- Header -->
+  <div>
+    <h1 style="font-size:1.75rem; font-weight:700; color:#fff; margin:0 0 0.25rem;">
+      Platform Settings & Controls
+    </h1>
+    <p style="color:var(--nf-text-dim); font-size:0.875rem; margin:0;">
+      Customize public gallery metadata, configure viewer interaction permissions, and review security policies.
+    </p>
+  </div>
+
+  <form method="POST" action="{{ url_for('admin.settings') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+    <!-- Gallery Branding Card -->
+    <div class="card" style="padding:1.75rem; background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px; margin-bottom:1.5rem;">
+      <h3 style="font-size:1.05rem; font-weight:600; color:#fff; margin:0 0 1.25rem; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:0.75rem;">
+        Gallery Branding & Identity
+      </h3>
+
+      <div style="display:flex; flex-direction:column; gap:1.25rem;">
+        <div>
+          <label for="gallery_title" class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">
+            Gallery Title
+          </label>
+          <input type="text"
+                 name="gallery_title"
+                 id="gallery_title"
+                 value="{{ cfg.get('gallery_title', 'NativeFrames') }}"
+                 class="form-control"
+                 style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:0.75rem 1rem;" />
+        </div>
+
+        <div>
+          <label for="gallery_subtitle" class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">
+            Brand Tagline / Subtitle
+          </label>
+          <input type="text"
+                 name="gallery_subtitle"
+                 id="gallery_subtitle"
+                 value="{{ cfg.get('gallery_subtitle', 'Every frame tells a story.') }}"
+                 class="form-control"
+                 style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:0.75rem 1rem;" />
+        </div>
+
+        <div>
+          <label for="items_per_page" class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">
+            Items Per Page (Pagination)
+          </label>
+          <input type="number"
+                 name="items_per_page"
+                 id="items_per_page"
+                 min="6"
+                 max="120"
+                 value="{{ cfg.get('items_per_page', '24') }}"
+                 class="form-control"
+                 style="width:160px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:0.6rem 1rem;" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Viewer Interaction Toggles Card -->
+    <div class="card" style="padding:1.75rem; background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px; margin-bottom:1.5rem;">
+      <h3 style="font-size:1.05rem; font-weight:600; color:#fff; margin:0 0 1.25rem; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:0.75rem;">
+        Viewer Permissions & Feature Toggles
+      </h3>
+
+      <div style="display:flex; flex-direction:column; gap:1.25rem;">
+        
+        <!-- Allow Likes -->
+        <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+          <div>
+            <div style="font-size:0.9rem; font-weight:600; color:#fff;">Enable Heart Reactions (Likes)</div>
+            <div style="font-size:0.75rem; color:var(--nf-text-dim);">Allows guests to like photographs, video clips, and audio tracks.</div>
+          </div>
+          <input type="checkbox" name="allow_likes" value="1" {% if cfg.get('allow_likes', '1') == '1' %}checked{% endif %} style="width:20px; height:20px; accent-color:var(--nf-gold);" />
+        </label>
+
+        <!-- Allow Favourites -->
+        <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
+          <div>
+            <div style="font-size:0.9rem; font-weight:600; color:#fff;">Enable Favourites Bookmark (★)</div>
+            <div style="font-size:0.75rem; color:var(--nf-text-dim);">Guests can curate their personal shortlist of favourite media during their session.</div>
+          </div>
+          <input type="checkbox" name="allow_favourites" value="1" {% if cfg.get('allow_favourites', '1') == '1' %}checked{% endif %} style="width:20px; height:20px; accent-color:var(--nf-gold);" />
+        </label>
+
+        <!-- Allow Downloads -->
+        <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
+          <div>
+            <div style="font-size:0.9rem; font-weight:600; color:#fff;">Allow Direct Media Downloads</div>
+            <div style="font-size:0.75rem; color:var(--nf-text-dim);">Exposes download links to visitors to save master media files locally.</div>
+          </div>
+          <input type="checkbox" name="allow_downloads" value="1" {% if cfg.get('allow_downloads', '0') == '1' %}checked{% endif %} style="width:20px; height:20px; accent-color:var(--nf-gold);" />
+        </label>
+
+        <!-- Show View Counts -->
+        <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; border-top:1px solid rgba(255,255,255,0.04); padding-top:1rem;">
+          <div>
+            <div style="font-size:0.9rem; font-weight:600; color:#fff;">Display View Counts to Viewers</div>
+            <div style="font-size:0.75rem; color:var(--nf-text-dim);">Shows total views metrics badge on media cards in the viewer gallery.</div>
+          </div>
+          <input type="checkbox" name="show_view_counts" value="1" {% if cfg.get('show_view_counts', '1') == '1' %}checked{% endif %} style="width:20px; height:20px; accent-color:var(--nf-gold);" />
+        </label>
+
+      </div>
+    </div>
+
+    <!-- Save Button -->
+    <div style="display:flex; justify-content:flex-end; gap:1rem; margin-bottom:2rem;">
+      <button type="submit" class="btn btn-primary" style="padding:0.75rem 2.5rem;">
+        Save All Settings
+      </button>
+    </div>
+  </form>
+
+  <!-- System Health & Architecture Summary -->
+  <div class="card" style="padding:1.5rem; background:#101013; border:1px solid rgba(255,255,255,0.06); border-radius:14px;">
+    <h3 style="font-size:0.95rem; font-weight:600; color:var(--nf-gold); margin:0 0 1rem; text-transform:uppercase; letter-spacing:0.04em;">
+      System Architecture & Security
+    </h3>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; font-size:0.8rem; color:var(--nf-text-dim);">
+      <div>
+        <span style="display:block; margin-bottom:0.2rem;">Framework</span>
+        <span style="color:#fff; font-weight:600;">Flask 3.0 / SQLAlchemy ORM</span>
+      </div>
+      <div>
+        <span style="display:block; margin-bottom:0.2rem;">CSRF Protection</span>
+        <span style="color:#34d399; font-weight:600;">Active (Flask-WTF)</span>
+      </div>
+      <div>
+        <span style="display:block; margin-bottom:0.2rem;">Rate Limiting</span>
+        <span style="color:#34d399; font-weight:600;">Active (Admin Login Lockout)</span>
+      </div>
+      <div>
+        <span style="display:block; margin-bottom:0.2rem;">File Upload Limit</span>
+        <span style="color:#fff; font-weight:600;">500 MB Max</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

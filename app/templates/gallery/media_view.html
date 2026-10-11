@@ -1,0 +1,211 @@
+{% extends "base_gallery.html" %}
+
+{% block title %}{{ media.title }} — {{ cfg.get('gallery_title', 'NativeFrames') }}{% endblock %}
+
+{% block content %}
+<div class="gallery-container" style="max-width:1200px; margin:0 auto; padding:1.5rem 1.5rem 4rem;">
+
+  <!-- Top bar: Back to gallery & Prev/Next -->
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+    {% if media.folder %}
+    <a href="{{ url_for('gallery.folder_view', folder_id=media.folder_id) }}" style="color:var(--nf-gold); font-size:0.875rem; text-decoration:none; display:flex; align-items:center; gap:0.35rem;">
+      ‹ Back to {{ media.folder.name }}
+    </a>
+    {% else %}
+    <a href="{{ url_for('gallery.index', tab=media.media_type + 's' if media.media_type in ('photo','video') else media.media_type) }}" style="color:var(--nf-gold); font-size:0.875rem; text-decoration:none; display:flex; align-items:center; gap:0.35rem;">
+      ‹ Back to Gallery
+    </a>
+    {% endif %}
+
+    <div style="display:flex; gap:0.5rem;">
+      {% if prev_id %}
+      <a href="{{ url_for('gallery.media_view', media_id=prev_id) }}" class="btn btn-ghost btn-sm" title="Previous Frame">‹ Previous</a>
+      {% endif %}
+      {% if next_id %}
+      <a href="{{ url_for('gallery.media_view', media_id=next_id) }}" class="btn btn-ghost btn-sm" title="Next Frame">Next ›</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Main Showcase Theater Card -->
+  <div style="background:#111114; border:1px solid rgba(255,255,255,0.08); border-radius:16px; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,0.8); margin-bottom:2rem;">
+    
+    <!-- Player/Display Area -->
+    <div style="background:#000; display:flex; justify-content:center; align-items:center; min-height:480px; max-height:80vh; position:relative;">
+      {% if media.media_type == 'video' %}
+        <video id="player-video"
+               data-media-id="{{ media.id }}"
+               controls
+               autoplay
+               playsinline
+               preload="metadata"
+               poster="{{ url_for('uploaded_file', filename=media.thumbnail_path) if media.thumbnail_path else '' }}"
+               style="max-width:100%; max-height:80vh; width:auto; height:auto; outline:none;">
+          <source src="{{ url_for('uploaded_file', filename=media.storage_path) }}" type="{{ media.mime_type or 'video/mp4' }}" />
+          Your browser does not support the video tag.
+        </video>
+      {% elif media.media_type == 'photo' %}
+        <img src="{{ url_for('uploaded_file', filename=media.storage_path) }}"
+             alt="{{ media.title }}"
+             style="max-width:100%; max-height:80vh; width:auto; height:auto; object-fit:contain; display:block;" />
+      {% elif media.media_type == 'audio' %}
+        <div style="padding:4rem 2rem; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%;">
+          {% if media.thumbnail_path %}
+          <img src="{{ url_for('uploaded_file', filename=media.thumbnail_path) }}"
+               alt="{{ media.title }}"
+               style="width:200px; height:200px; border-radius:50%; object-fit:cover; border:4px solid var(--nf-gold); box-shadow:0 12px 36px rgba(0,0,0,0.8); margin-bottom:2rem; animation:spin 20s linear infinite;" />
+          {% else %}
+          <div style="width:160px; height:160px; border-radius:50%; background:linear-gradient(135deg, #2e1065, #0f172a); border:3px solid #8b5cf6; display:flex; align-items:center; justify-content:center; font-size:4rem; margin-bottom:2rem; box-shadow:0 12px 36px rgba(0,0,0,0.8);">
+            🎵
+          </div>
+          {% endif %}
+          <audio id="player-audio" data-media-id="{{ media.id }}" controls autoplay style="width:100%; max-width:540px; filter:invert(0.9) hue-rotate(180deg);">
+            <source src="{{ url_for('uploaded_file', filename=media.storage_path) }}" type="{{ media.mime_type or 'audio/mpeg' }}" />
+            Your browser does not support the audio element.
+          </audio>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Media Info & Interaction Bar -->
+    <div style="padding:1.75rem 2rem; border-top:1px solid rgba(255,255,255,0.06); display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-start; gap:1.5rem;">
+      <div style="flex:1; min-width:280px;">
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.4rem;">
+          <span class="media-type-badge {{ media.media_type }}" style="font-size:0.7rem; font-weight:700; text-transform:uppercase; padding:0.2rem 0.5rem; border-radius:4px;">
+            {{ media.media_type }}
+          </span>
+          {% if media.duration_seconds and media.duration_seconds > 0 %}
+          <span style="font-size:0.75rem; color:var(--nf-text-dim);">
+            Duration: {{ format_duration(media.duration_seconds) }}
+          </span>
+          {% endif %}
+        </div>
+
+        <h1 style="font-size:1.6rem; font-weight:700; color:#fff; margin:0 0 0.5rem; letter-spacing:-0.02em;">
+          {{ media.title }}
+        </h1>
+
+        {% if media.artist %}
+        <div style="font-size:0.95rem; color:var(--nf-gold); margin-bottom:0.75rem; font-weight:500;">
+          Artist: {{ media.artist }}
+        </div>
+        {% endif %}
+
+        {% if media.description %}
+        <p style="color:#bbb; font-size:0.95rem; line-height:1.6; margin:0 0 1rem; max-width:760px;">
+          {{ media.description }}
+        </p>
+        {% endif %}
+
+        {% if media.tags %}
+        <div style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.5rem;">
+          {% for t in media.tags.split(',') %}
+          {% if t.strip() %}
+          <span style="font-size:0.75rem; background:rgba(255,255,255,0.05); color:var(--nf-text-dim); padding:0.2rem 0.6rem; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
+            #{{ t.strip() }}
+          </span>
+          {% endif %}
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Actions (Like, Fav, Download, Views) -->
+      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:1rem;">
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+          {% if cfg.get('allow_likes','1') == '1' %}
+          <button class="btn btn-ghost media-action-btn {% if media.id in like_ids %}active{% endif %}"
+                  data-action="like"
+                  data-media-id="{{ media.id }}"
+                  style="display:flex; align-items:center; gap:0.5rem; font-size:0.9rem; padding:0.5rem 1rem; border-radius:8px;">
+            ♥ <span class="like-count">{{ media.like_count }}</span> Likes
+          </button>
+          {% endif %}
+
+          {% if cfg.get('allow_favourites','1') == '1' %}
+          <button class="btn btn-ghost media-action-btn {% if media.id in fav_ids %}active{% endif %}"
+                  data-action="favourite"
+                  data-media-id="{{ media.id }}"
+                  style="display:flex; align-items:center; gap:0.5rem; font-size:0.9rem; padding:0.5rem 1rem; border-radius:8px;">
+            ★ Favourite
+          </button>
+          {% endif %}
+
+          {% if cfg.get('allow_downloads','0') == '1' %}
+          <a href="{{ url_for('uploaded_file', filename=media.storage_path) }}"
+             download
+             class="btn btn-primary btn-sm"
+             style="display:flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; border-radius:8px;">
+            ↓ Download
+          </a>
+          {% endif %}
+        </div>
+
+        <div style="font-size:0.8rem; color:var(--nf-text-dim); display:flex; gap:1rem;">
+          <span>👁 {{ media.view_count }} views</span>
+          {% if media.published_at %}
+          <span>Published {{ media.published_at.strftime('%b %d, %Y') }}</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    initInteractions();
+
+    // Video progress tracking
+    const video = document.getElementById('player-video');
+    if (video) {
+      let loggedQuarters = new Set();
+      video.addEventListener('timeupdate', function() {
+        if (!video.duration) return;
+        const pct = (video.currentTime / video.duration) * 100;
+        const mediaId = video.dataset.mediaId;
+        
+        [25, 50, 75].forEach(q => {
+          if (pct >= q && !loggedQuarters.has(q)) {
+            loggedQuarters.add(q);
+            apiPost('/api/event', {
+              event_type: 'video_progress',
+              media_id: mediaId,
+              meta: { percent: q, current_time: Math.round(video.currentTime) }
+            });
+          }
+        });
+      });
+
+      video.addEventListener('ended', function() {
+        const mediaId = video.dataset.mediaId;
+        apiPost('/api/event', {
+          event_type: 'video_complete',
+          media_id: mediaId
+        });
+      });
+    }
+
+    // Audio progress tracking
+    const audio = document.getElementById('player-audio');
+    if (audio) {
+      audio.addEventListener('ended', function() {
+        const mediaId = audio.dataset.mediaId;
+        apiPost('/api/event', {
+          event_type: 'audio_complete',
+          media_id: mediaId
+        });
+      });
+    }
+  });
+</script>
+<style>
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+</style>
+{% endblock %}

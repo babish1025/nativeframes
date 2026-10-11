@@ -1,0 +1,314 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Dashboard — NativeFrames Admin Studio{% endblock %}
+{% block breadcrumb %}Dashboard Overview{% endblock %}
+
+{% block content %}
+<div style="display:flex; flex-direction:column; gap:2rem;">
+
+  <!-- Page Title & Header Actions -->
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <h1 style="font-size:1.75rem; font-weight:700; color:#fff; margin:0 0 0.25rem; letter-spacing:-0.02em;">
+        Executive Dashboard
+      </h1>
+      <p style="color:var(--nf-text-dim); font-size:0.875rem; margin:0;">
+        Real-time telemetry, storage metrics, and private viewer engagement.
+      </p>
+    </div>
+    <div style="display:flex; gap:0.75rem;">
+      <a href="{{ url_for('admin.upload_media') }}" class="btn btn-primary" style="display:flex; align-items:center; gap:0.5rem;">
+        <span>⬆</span> Upload Media
+      </a>
+      <a href="{{ url_for('admin.folders') }}" class="btn btn-ghost" style="display:flex; align-items:center; gap:0.5rem;">
+        <span>📁</span> Manage Folders
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Metrics Grid -->
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1.25rem;">
+    <!-- Total Media -->
+    <div class="stat-card">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
+        <span class="stat-label">Total Media Items</span>
+        <span style="font-size:1.4rem;">🎞️</span>
+      </div>
+      <div class="stat-value" style="color:var(--nf-gold);">{{ total_photos + total_videos + total_audio }}</div>
+      <div style="font-size:0.75rem; color:var(--nf-text-dim); margin-top:0.5rem; display:flex; gap:0.75rem;">
+        <span>📸 {{ total_photos }}</span>
+        <span>🎬 {{ total_videos }}</span>
+        <span>🎵 {{ total_audio }}</span>
+      </div>
+    </div>
+
+    <!-- Total Views -->
+    <div class="stat-card">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
+        <span class="stat-label">Total Impressions</span>
+        <span style="font-size:1.4rem;">👁️</span>
+      </div>
+      <div class="stat-value" style="color:#60a5fa;">{{ "{:,}".format(media_views) }}</div>
+      <div style="font-size:0.75rem; color:var(--nf-text-dim); margin-top:0.5rem;">
+        Across all published media frames
+      </div>
+    </div>
+
+    <!-- Viewer Sessions -->
+    <div class="stat-card">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
+        <span class="stat-label">Viewer Sessions</span>
+        <span style="font-size:1.4rem;">👥</span>
+      </div>
+      <div class="stat-value" style="color:#34d399;">{{ total_sessions }}</div>
+      <div style="font-size:0.75rem; color:var(--nf-text-dim); margin-top:0.5rem;">
+        <span style="color:#34d399; font-weight:600;">{{ unique_names }}</span> distinct viewer names
+      </div>
+    </div>
+
+    <!-- Storage Consumed -->
+    <div class="stat-card">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
+        <span class="stat-label">Storage Consumed</span>
+        <span style="font-size:1.4rem;">💾</span>
+      </div>
+      <div class="stat-value" style="color:#f472b6;">{{ storage_human }}</div>
+      <div style="font-size:0.75rem; color:var(--nf-text-dim); margin-top:0.5rem;">
+        <span>{{ published_media }} published</span> • <span>{{ draft_media }} drafts</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1.5rem;">
+    <!-- Activity Chart -->
+    <div class="card" style="padding:1.5rem; background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+        <h3 style="font-size:1rem; font-weight:600; color:#fff; margin:0;">Audience Traffic (Last 14 Days)</h3>
+        <span style="font-size:0.75rem; color:var(--nf-gold); background:rgba(212,175,55,0.1); padding:0.2rem 0.6rem; border-radius:12px;">Active Logs</span>
+      </div>
+      <div style="height:260px; position:relative;">
+        <canvas id="trafficChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Content Distribution Chart -->
+    <div class="card" style="padding:1.5rem; background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+        <h3 style="font-size:1rem; font-weight:600; color:#fff; margin:0;">Media Breakdown</h3>
+        <span style="font-size:0.75rem; color:var(--nf-text-dim);">By Type</span>
+      </div>
+      <div style="height:260px; position:relative; display:flex; align-items:center; justify-content:center;">
+        <canvas id="distributionChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dual Tables: Recent Uploads & Most Viewed -->
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
+    
+    <!-- Recent Media -->
+    <div class="card" style="background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px; overflow:hidden;">
+      <div style="padding:1.25rem 1.5rem; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="font-size:1rem; font-weight:600; color:#fff; margin:0;">Recent Uploads</h3>
+        <a href="{{ url_for('admin.media_library') }}" style="font-size:0.8rem; color:var(--nf-gold); text-decoration:none;">View all →</a>
+      </div>
+      <div style="padding:0.5rem 1rem;">
+        {% if recent_media %}
+        <div style="display:flex; flex-direction:column; gap:0.5rem;">
+          {% for m in recent_media %}
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:0.6rem 0.5rem; border-radius:8px; transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+              <div style="width:40px; height:40px; border-radius:6px; overflow:hidden; background:#1c1c20; flex-shrink:0;">
+                {% if m.thumbnail_path %}
+                <img src="{{ url_for('uploaded_file', filename=m.thumbnail_path) }}" alt="" style="width:100%; height:100%; object-fit:cover;" />
+                {% elif m.media_type == 'photo' %}
+                <img src="{{ url_for('uploaded_file', filename=m.storage_path) }}" alt="" style="width:100%; height:100%; object-fit:cover;" />
+                {% else %}
+                <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+                  {% if m.media_type == 'video' %}🎬{% else %}🎵{% endif %}
+                </div>
+                {% endif %}
+              </div>
+              <div>
+                <div style="font-size:0.875rem; font-weight:500; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px;">{{ m.title }}</div>
+                <div style="font-size:0.75rem; color:var(--nf-text-dim);">{{ m.media_type|capitalize }} • {{ m.created_at.strftime('%b %d') if m.created_at else '' }}</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <span class="badge {% if m.status == 'published' %}badge-gold{% else %}badge-ghost{% endif %}" style="font-size:0.7rem;">{{ m.status }}</span>
+              <a href="{{ url_for('admin.edit_media', media_id=m.id) }}" class="btn btn-ghost btn-sm" style="padding:0.25rem 0.5rem; font-size:0.75rem;">Edit</a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div style="padding:2rem; text-align:center; color:var(--nf-text-dim); font-size:0.875rem;">No media items uploaded yet.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Top Performing Media -->
+    <div class="card" style="background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px; overflow:hidden;">
+      <div style="padding:1.25rem 1.5rem; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="font-size:1rem; font-weight:600; color:#fff; margin:0;">Top Viewed Frames</h3>
+        <span style="font-size:0.75rem; color:var(--nf-text-dim);">By views</span>
+      </div>
+      <div style="padding:0.5rem 1rem;">
+        {% if top_media %}
+        <div style="display:flex; flex-direction:column; gap:0.5rem;">
+          {% for m in top_media %}
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:0.6rem 0.5rem; border-radius:8px; transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+              <div style="font-size:0.9rem; font-weight:700; color:var(--nf-gold); width:20px; text-align:center;">#{{ loop.index }}</div>
+              <div>
+                <div style="font-size:0.875rem; font-weight:500; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:220px;">{{ m.title }}</div>
+                <div style="font-size:0.75rem; color:var(--nf-text-dim);">♥ {{ m.like_count }} likes</div>
+              </div>
+            </div>
+            <div style="font-size:0.85rem; font-weight:600; color:var(--nf-gold);">
+              👁 {{ m.view_count }}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div style="padding:2rem; text-align:center; color:var(--nf-text-dim); font-size:0.875rem;">No view data recorded yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Viewer Sessions -->
+  <div class="card" style="background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px; overflow:hidden;">
+    <div style="padding:1.25rem 1.5rem; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="font-size:1rem; font-weight:600; color:#fff; margin:0;">Recent Viewer Sessions</h3>
+      <a href="{{ url_for('admin.viewers') }}" style="font-size:0.8rem; color:var(--nf-gold); text-decoration:none;">View all viewers →</a>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="viewers-table" style="width:100%; border-collapse:collapse; font-size:0.875rem;">
+        <thead>
+          <tr style="color:var(--nf-text-dim); text-align:left; border-bottom:1px solid rgba(255,255,255,0.06);">
+            <th style="padding:0.75rem 1.25rem;">Viewer</th>
+            <th style="padding:0.75rem 1rem;">IP Address</th>
+            <th style="padding:0.75rem 1rem;">Device / Browser</th>
+            <th style="padding:0.75rem 1rem;">Status</th>
+            <th style="padding:0.75rem 1rem;">Started</th>
+            <th style="padding:0.75rem 1.25rem; text-align:right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if recent_sessions %}
+          {% for vs in recent_sessions %}
+          <tr class="session-row" style="border-bottom:1px solid rgba(255,255,255,0.03);">
+            <td style="padding:0.85rem 1.25rem; font-weight:600; color:#fff;">
+              <span style="color:var(--nf-gold); margin-right:0.35rem;">●</span> {{ vs.display_name }}
+            </td>
+            <td style="padding:0.85rem 1rem; color:var(--nf-text-dim); font-family:monospace; font-size:0.8rem;">
+              {{ vs.ip_address or '—' }}
+            </td>
+            <td style="padding:0.85rem 1rem; color:var(--nf-text-dim); max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              {{ vs.user_agent or 'Unknown' }}
+            </td>
+            <td style="padding:0.85rem 1rem;">
+              <span class="badge {% if vs.session_status == 'active' %}badge-gold{% else %}badge-ghost{% endif %}" style="font-size:0.7rem;">
+                {{ vs.session_status }}
+              </span>
+            </td>
+            <td style="padding:0.85rem 1rem; color:var(--nf-text-dim); font-size:0.8rem;">
+              {{ vs.created_at.strftime('%b %d, %H:%M') if vs.created_at else '—' }}
+            </td>
+            <td style="padding:0.85rem 1.25rem; text-align:right;">
+              <a href="{{ url_for('admin.viewer_events', session_id=vs.id) }}" class="btn btn-ghost btn-sm" style="padding:0.25rem 0.5rem; font-size:0.75rem;">Timeline</a>
+            </td>
+          </tr>
+          {% endfor %}
+          {% else %}
+          <tr>
+            <td colspan="6" style="padding:2rem; text-align:center; color:var(--nf-text-dim);">No viewer sessions logged yet.</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Traffic chart
+    const trafficCtx = document.getElementById('trafficChart')?.getContext('2d');
+    if (trafficCtx) {
+      const labels = {{ activity_labels|safe }};
+      const data = {{ activity_data|safe }};
+
+      new Chart(trafficCtx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Sessions',
+            data: data,
+            borderColor: '#D4AF37',
+            backgroundColor: 'rgba(212, 175, 55, 0.1)',
+            fill: true,
+            tension: 0.35,
+            pointBackgroundColor: '#D4AF37',
+            pointRadius: 4,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: { color: '#888', font: { size: 11 } }
+            },
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: { color: '#888', font: { size: 11 }, precision: 0 }
+            }
+          }
+        }
+      });
+    }
+
+    // Distribution chart
+    const distCtx = document.getElementById('distributionChart')?.getContext('2d');
+    if (distCtx) {
+      const typeCounts = {{ type_counts|safe }};
+      new Chart(distCtx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(typeCounts),
+          datasets: [{
+            data: Object.values(typeCounts),
+            backgroundColor: ['#D4AF37', '#3B82F6', '#8B5CF6'],
+            borderColor: '#121215',
+            borderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: '#aaa', padding: 15, font: { size: 12 } }
+            }
+          },
+          cutout: '68%'
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

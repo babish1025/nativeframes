@@ -1,0 +1,127 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Activity Timeline: {{ vs.display_name }} — NativeFrames{% endblock %}
+{% block breadcrumb %}
+<a href="{{ url_for('admin.viewers') }}" style="color:var(--nf-text-dim); text-decoration:none;">Viewers</a>
+<span style="color:var(--nf-text-dim); margin:0 0.4rem;">/</span>
+<span>{{ vs.display_name }}</span>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:960px; margin:0 auto; display:flex; flex-direction:column; gap:2rem;">
+
+  <!-- Header Card -->
+  <div class="card" style="padding:1.75rem; background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem;">
+      <div style="display:flex; align-items:center; gap:1rem;">
+        <div style="width:48px; height:48px; border-radius:50%; background:rgba(212,175,55,0.12); border:1.5px solid var(--nf-gold); display:flex; align-items:center; justify-content:center; font-size:1.4rem; color:var(--nf-gold); font-weight:700;">
+          {{ vs.display_name[0]|upper }}
+        </div>
+        <div>
+          <h1 style="font-size:1.5rem; font-weight:700; color:#fff; margin:0 0 0.2rem;">
+            {{ vs.display_name }}
+          </h1>
+          <div style="font-size:0.8rem; color:var(--nf-text-dim);">
+            Session Token: <code style="color:var(--nf-gold);">{{ vs.session_token[:16] }}…</code>
+          </div>
+        </div>
+      </div>
+
+      <span class="badge {% if vs.session_status == 'active' %}badge-gold{% else %}badge-ghost{% endif %}" style="font-size:0.8rem; padding:0.4rem 0.8rem;">
+        {{ vs.session_status|upper }}
+      </span>
+    </div>
+
+    <!-- Metadata Grid -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; border-top:1px solid rgba(255,255,255,0.06); padding-top:1rem; font-size:0.825rem;">
+      <div>
+        <span style="color:var(--nf-text-dim); display:block; margin-bottom:0.2rem;">IP Address</span>
+        <span style="color:#fff; font-family:monospace;">{{ vs.ip_address or '—' }}</span>
+      </div>
+      <div>
+        <span style="color:var(--nf-text-dim); display:block; margin-bottom:0.2rem;">Logged In</span>
+        <span style="color:#fff;">{{ vs.created_at.strftime('%b %d, %Y %H:%M:%S') if vs.created_at else '—' }}</span>
+      </div>
+      <div>
+        <span style="color:var(--nf-text-dim); display:block; margin-bottom:0.2rem;">Last Active</span>
+        <span style="color:#fff;">{{ vs.last_activity_at.strftime('%H:%M:%S') if vs.last_activity_at else '—' }}</span>
+      </div>
+      <div>
+        <span style="color:var(--nf-text-dim); display:block; margin-bottom:0.2rem;">Total Events</span>
+        <span style="color:var(--nf-gold); font-weight:600;">{{ events|length }} interactions</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Event Timeline -->
+  <div>
+    <h2 style="font-size:1.1rem; font-weight:600; color:#fff; margin:0 0 1.25rem;">
+      Chronological Interaction Timeline
+    </h2>
+
+    {% if events %}
+    <div style="position:relative; padding-left:2rem; border-left:2px solid rgba(212,175,55,0.2); display:flex; flex-direction:column; gap:1.25rem;">
+      {% for ev in events %}
+      <div style="position:relative; background:#141418; border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:1rem 1.25rem;">
+        
+        <!-- Timeline Dot Indicator -->
+        <div style="position:absolute; left:-2rem; top:1.2rem; transform:translateX(-50%); width:12px; height:12px; border-radius:50%; background:var(--nf-gold); border:2px solid #080808;"></div>
+
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.4rem;">
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <span style="font-size:1rem;">
+              {% if 'video' in ev.event_type %}🎬
+              {% elif 'audio' in ev.event_type %}🎵
+              {% elif 'image' in ev.event_type or 'photo' in ev.event_type %}📸
+              {% elif 'folder' in ev.event_type %}📁
+              {% elif 'like' in ev.event_type %}♥
+              {% elif 'favourite' in ev.event_type %}★
+              {% elif 'login' in ev.event_type %}🔑
+              {% elif 'logout' in ev.event_type %}🚪
+              {% else %}📌{% endif %}
+            </span>
+            <span style="font-weight:600; color:#fff; font-size:0.9rem; text-transform:capitalize;">
+              {{ ev.event_type.replace('_', ' ') }}
+            </span>
+          </div>
+          <span style="font-size:0.75rem; color:var(--nf-text-dim);">
+            {{ ev.event_timestamp.strftime('%H:%M:%S • %b %d') if ev.event_timestamp else '' }}
+          </span>
+        </div>
+
+        {% if ev.media %}
+        <div style="display:flex; align-items:center; gap:0.75rem; background:rgba(255,255,255,0.03); padding:0.5rem 0.75rem; border-radius:6px; margin-top:0.5rem;">
+          {% if ev.media.thumbnail_path %}
+          <img src="{{ url_for('uploaded_file', filename=ev.media.thumbnail_path) }}" alt="" style="width:36px; height:36px; object-fit:cover; border-radius:4px;" />
+          {% endif %}
+          <div>
+            <a href="{{ url_for('admin.edit_media', media_id=ev.media.id) }}" style="color:var(--nf-gold); text-decoration:none; font-weight:500; font-size:0.85rem;">
+              {{ ev.media.title }}
+            </a>
+            <div style="font-size:0.75rem; color:var(--nf-text-dim);">{{ ev.media.media_type|capitalize }} Frame</div>
+          </div>
+        </div>
+        {% elif ev.folder %}
+        <div style="font-size:0.85rem; color:var(--nf-gold); margin-top:0.25rem;">
+          Collection: {{ ev.folder.name }}
+        </div>
+        {% endif %}
+
+        {% if ev.meta_json %}
+        <div style="font-size:0.75rem; color:var(--nf-text-dim); margin-top:0.4rem; font-family:monospace; background:rgba(0,0,0,0.3); padding:0.35rem 0.6rem; border-radius:4px;">
+          Payload: {{ ev.meta_json }}
+        </div>
+        {% endif %}
+
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:3rem; background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px; color:var(--nf-text-dim);">
+      No granular events recorded for this session yet.
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

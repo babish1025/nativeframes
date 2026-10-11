@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="csrf-token" content="{{ csrf_token() }}" />
+  <title>Admin Studio Login — NativeFrames</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+  <link rel="icon" href="{{ url_for('static', filename='images/nativeframes-logo.jpg') }}" type="image/jpeg" />
+</head>
+<body>
+
+<div class="viewer-entry-page" role="main">
+  <div class="viewer-entry-bg-dots" aria-hidden="true"></div>
+
+  <div class="viewer-entry-card" style="max-width:440px;">
+
+    <img class="viewer-entry-logo"
+         src="{{ url_for('static', filename='images/nativeframes-logo.jpg') }}"
+         alt="NativeFrames" />
+
+    <h1 class="viewer-entry-heading">Admin Studio</h1>
+    <p class="viewer-entry-sub">Private Gallery Management Portal</p>
+
+    {% if error %}
+    <div class="alert alert-error" style="margin-bottom:1.25rem;text-align:left;">
+      <span class="alert-icon">✕</span>
+      <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('auth.admin_login', next=request.args.get('next','')) }}" id="admin-login-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      
+      <div class="form-group" style="text-align:left; margin-bottom:1rem;">
+        <label for="admin-username" class="form-label" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--nf-gold);margin-bottom:0.4rem;display:block;">Username</label>
+        <input
+          class="form-control"
+          type="text"
+          name="username"
+          id="admin-username"
+          placeholder="Enter admin username"
+          required
+          autofocus
+          autocomplete="username"
+          style="background:rgba(255,255,255,0.04);border:1px solid var(--nf-border);color:#fff;border-radius:8px;padding:0.75rem 1rem;width:100%;font-size:0.95rem;"
+        />
+      </div>
+
+      <div class="form-group" style="text-align:left; margin-bottom:1.5rem;">
+        <label for="admin-password" class="form-label" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--nf-gold);margin-bottom:0.4rem;display:block;">Password</label>
+        <input
+          class="form-control"
+          type="password"
+          name="password"
+          id="admin-password"
+          placeholder="••••••••••••"
+          required
+          autocomplete="current-password"
+          style="background:rgba(255,255,255,0.04);border:1px solid var(--nf-border);color:#fff;border-radius:8px;padding:0.75rem 1rem;width:100%;font-size:0.95rem;"
+        />
+      </div>
+
+      <button type="submit" class="viewer-entry-btn" id="login-btn" style="width:100%;">
+        Authenticate & Enter
+      </button>
+    </form>
+
+    <div style="margin-top:1.5rem;border-top:1px solid var(--nf-border);padding-top:1rem;display:flex;justify-content:space-between;align-items:center;">
+      <a href="{{ url_for('index') }}" style="font-size:.8rem;color:var(--nf-text-dim);">← Back to home</a>
+      <a href="{{ url_for('auth.viewer_entry') }}" style="font-size:.8rem;color:var(--nf-gold);">Viewer Entry →</a>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+  document.getElementById('admin-login-form').addEventListener('submit', function() {
+    var b = document.getElementById('login-btn');
+    b.disabled = true;
+    b.textContent = 'Verifying…';
+  });
+</script>
+</body>
+</html>

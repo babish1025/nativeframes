@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="csrf-token" content="{{ csrf_token() }}" />
+  <title>{% block title %}Admin — NativeFrames{% endblock %}</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+  <link rel="icon" href="{{ url_for('static', filename='images/nativeframes-logo.jpg') }}" type="image/jpeg" />
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<div class="admin-wrapper">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="nf-sidebar" id="nf-sidebar" role="navigation" aria-label="Admin navigation">
+    <div class="sidebar-brand">
+      <img src="{{ url_for('static', filename='images/nativeframes-logo.jpg') }}" alt="NativeFrames" />
+      <div class="sidebar-brand-text">
+        <div class="sidebar-brand-name">NativeFrames</div>
+        <div class="sidebar-brand-sub">Admin Studio</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a href="{{ url_for('admin.dashboard') }}"
+         class="nav-item {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+        <span class="icon">🏠</span> Dashboard
+      </a>
+
+      <div class="nav-section-label">Content</div>
+      <a href="{{ url_for('admin.media_library') }}"
+         class="nav-item {% if request.endpoint in ('admin.media_library','admin.edit_media') %}active{% endif %}">
+        <span class="icon">🖼️</span> Media Library
+      </a>
+      <a href="{{ url_for('admin.upload_media') }}"
+         class="nav-item {% if request.endpoint == 'admin.upload_media' %}active{% endif %}">
+        <span class="icon">⬆️</span> Upload Media
+      </a>
+      <a href="{{ url_for('admin.folders') }}"
+         class="nav-item {% if request.endpoint in ('admin.folders','admin.create_folder','admin.edit_folder') %}active{% endif %}">
+        <span class="icon">📁</span> Folders
+      </a>
+      <a href="{{ url_for('admin.trash') }}"
+         class="nav-item {% if request.endpoint == 'admin.trash' %}active{% endif %}">
+        <span class="icon">🗑️</span> Recycle Bin
+      </a>
+
+      <div class="nav-section-label">Audience</div>
+      <a href="{{ url_for('admin.viewers') }}"
+         class="nav-item {% if request.endpoint in ('admin.viewers','admin.viewer_events') %}active{% endif %}">
+        <span class="icon">👥</span> Viewer Activity
+      </a>
+      <a href="{{ url_for('admin.analytics') }}"
+         class="nav-item {% if request.endpoint == 'admin.analytics' %}active{% endif %}">
+        <span class="icon">📊</span> Analytics
+      </a>
+
+      <div class="nav-section-label">System</div>
+      <a href="{{ url_for('admin.settings') }}"
+         class="nav-item {% if request.endpoint == 'admin.settings' %}active{% endif %}">
+        <span class="icon">⚙️</span> Settings
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="{{ url_for('auth.admin_logout') }}" class="nav-item hover-gold">
+        <span class="icon">🚪</span> Logout
+      </a>
+    </div>
+  </aside>
+  <!-- ===================== /SIDEBAR ===================== -->
+
+  <!-- ===================== MAIN ===================== -->
+  <main class="admin-main" id="admin-main">
+
+    <!-- Topbar -->
+    <header class="admin-topbar">
+      <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
+        ☰
+      </button>
+      <div class="topbar-breadcrumb">
+        <span>{% block breadcrumb %}Dashboard{% endblock %}</span>
+      </div>
+      <div class="topbar-actions">
+        <a href="{{ url_for('gallery.index') }}" class="btn btn-ghost btn-sm" target="_blank" title="View Gallery">
+          🖼 View Gallery
+        </a>
+        <div class="admin-avatar" title="{{ g.admin.username if g.admin else 'Admin' }}">
+          {{ (g.admin.username[0]|upper) if g.admin else 'A' }}
+        </div>
+      </div>
+    </header>
+
+    <!-- Flash messages -->
+    <div style="padding: .75rem 1.5rem 0;">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'error' else 'warning' if category == 'warning' else 'info' }} auto-dismiss">
+            <span class="alert-icon">
+              {% if category == 'success' %}✓{% elif category == 'error' %}✕{% elif category == 'warning' %}⚠{% else %}ℹ{% endif %}
+            </span>
+            <span>{{ message }}</span>
+            <button class="alert-close" aria-label="Dismiss">✕</button>
+          </div>
+        {% endfor %}
+      {% endwith %}
+    </div>
+
+    <div class="admin-content">
+      {% block content %}{% endblock %}
+    </div>
+
+  </main>
+  <!-- ===================== /MAIN ===================== -->
+
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

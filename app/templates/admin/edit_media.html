@@ -1,0 +1,195 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Edit Frame: {{ media.title }} — NativeFrames{% endblock %}
+{% block breadcrumb %}
+<a href="{{ url_for('admin.media_library') }}" style="color:var(--nf-text-dim); text-decoration:none;">Media Library</a>
+<span style="color:var(--nf-text-dim); margin:0 0.4rem;">/</span>
+<span>Edit Frame</span>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:960px; margin:0 auto;">
+
+  <!-- Header -->
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:2rem;">
+    <div>
+      <h1 style="font-size:1.75rem; font-weight:700; color:#fff; margin:0 0 0.25rem;">
+        Edit Frame
+      </h1>
+      <p style="color:var(--nf-text-dim); font-size:0.875rem; margin:0;">
+        Update title, tags, collection folder, visibility status, or replace file asset.
+      </p>
+    </div>
+    <div style="display:flex; gap:0.75rem;">
+      {% if media.status == 'published' %}
+      <a href="{{ url_for('gallery.media_view', media_id=media.id) }}" target="_blank" class="btn btn-ghost" style="display:flex; align-items:center; gap:0.4rem;">
+        👁 View in Gallery
+      </a>
+      {% endif %}
+      <form method="POST" action="{{ url_for('admin.edit_media', media_id=media.id) }}" style="display:inline;" onsubmit="return confirm('Move this frame to Recycle Bin?');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input type="hidden" name="action" value="delete" />
+        <button type="submit" class="btn btn-ghost" style="color:#ef4444;">
+          🗑 Move to Trash
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:2fr 1fr; gap:1.5rem;">
+    
+    <!-- Main Form Column -->
+    <div>
+      <form method="POST" action="{{ url_for('admin.edit_media', media_id=media.id) }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input type="hidden" name="action" value="save" />
+
+        <div class="card" style="padding:1.5rem; background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px; margin-bottom:1.5rem;">
+          <h3 style="font-size:1rem; font-weight:600; color:#fff; margin:0 0 1.25rem; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:0.75rem;">
+            Details & Information
+          </h3>
+
+          <div style="display:flex; flex-direction:column; gap:1.25rem;">
+            <div>
+              <label for="title" class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">
+                Title <span style="color:var(--nf-gold);">*</span>
+              </label>
+              <input type="text" name="title" id="title" required value="{{ media.title }}" class="form-control" style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:0.75rem 1rem;" />
+            </div>
+
+            <div>
+              <label for="description" class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">
+                Description / Story
+              </label>
+              <textarea name="description" id="description" rows="4" class="form-control" style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:0.75rem 1rem; font-family:inherit;">{{ media.description or '' }}</textarea>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+              <div>
+                <label for="folder_id" class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">
+                  Folder / Collection
+                </label>
+                <select name="folder_id" id="folder_id" class="form-control" style="width:100%; background:#18181c; border:1px solid rgba(255,255,255,0.1); color:#ddd; border-radius:8px; padding:0.75rem 1rem;">
+                  <option value="">(No folder — Top Level)</option>
+                  {% for f in folders %}
+                  <option value="{{ f.id }}" {% if media.folder_id == f.id %}selected{% endif %}>📁 {{ f.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div>
+                <label for="artist" class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">
+                  Artist / Creator
+                </label>
+                <input type="text" name="artist" id="artist" value="{{ media.artist or '' }}" class="form-control" style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:0.75rem 1rem;" />
+              </div>
+            </div>
+
+            <div>
+              <label for="tags" class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">
+                Tags <span style="font-size:0.75rem; color:var(--nf-text-dim);">(comma separated)</span>
+              </label>
+              <input type="text" name="tags" id="tags" value="{{ media.tags or '' }}" class="form-control" style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:0.75rem 1rem;" />
+            </div>
+
+            <!-- New Thumbnail upload -->
+            <div>
+              <label for="thumbnail_file" class="form-label" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">
+                Update Thumbnail Artwork <span style="font-size:0.75rem; color:var(--nf-text-dim);">(optional, JPG/PNG)</span>
+              </label>
+              <input type="file" name="thumbnail_file" id="thumbnail_file" accept=".jpg,.jpeg,.png,.webp" class="form-control" style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:0.6rem 1rem;" />
+            </div>
+
+            <div style="display:flex; align-items:center; justify-content:space-between; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.06);">
+              <div>
+                <div style="font-size:0.9rem; font-weight:600; color:#fff;">Publish Status</div>
+                <div style="font-size:0.75rem; color:var(--nf-text-dim);">Toggle viewer accessibility</div>
+              </div>
+              <select name="status" class="form-control" style="background:#18181c; border:1px solid rgba(255,255,255,0.1); color:#ddd; border-radius:8px; padding:0.5rem 1rem;">
+                <option value="published" {% if media.status == 'published' %}selected{% endif %}>Published</option>
+                <option value="draft" {% if media.status == 'draft' %}selected{% endif %}>Draft</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:1rem;">
+          <a href="{{ url_for('admin.media_library') }}" class="btn btn-ghost">Cancel</a>
+          <button type="submit" class="btn btn-primary" style="padding:0.75rem 2rem;">
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Sidebar Info Column -->
+    <div>
+      
+      <!-- Preview Card -->
+      <div class="card" style="padding:1.25rem; background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px; margin-bottom:1.5rem;">
+        <h4 style="font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--nf-gold); margin:0 0 1rem;">
+          Asset Preview
+        </h4>
+        <div style="width:100%; aspect-ratio:16/10; border-radius:8px; overflow:hidden; background:#000; margin-bottom:1rem; display:flex; align-items:center; justify-content:center;">
+          {% if media.thumbnail_path %}
+          <img src="{{ url_for('uploaded_file', filename=media.thumbnail_path) }}" alt="" style="width:100%; height:100%; object-fit:cover;" />
+          {% elif media.media_type == 'photo' %}
+          <img src="{{ url_for('uploaded_file', filename=media.storage_path) }}" alt="" style="width:100%; height:100%; object-fit:cover;" />
+          {% else %}
+          <span style="font-size:2.5rem;">{% if media.media_type == 'video' %}🎬{% else %}🎵{% endif %}</span>
+          {% endif %}
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.8rem; color:var(--nf-text-dim);">
+          <div style="display:flex; justify-content:space-between;">
+            <span>Media Type:</span>
+            <span style="color:#fff; font-weight:600;">{{ media.media_type|capitalize }}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span>File Size:</span>
+            <span style="color:#fff;">{{ human_filesize(media.file_size or 0) }}</span>
+          </div>
+          {% if media.duration_seconds %}
+          <div style="display:flex; justify-content:space-between;">
+            <span>Duration:</span>
+            <span style="color:#fff;">{{ format_duration(media.duration_seconds) }}</span>
+          </div>
+          {% endif %}
+          <div style="display:flex; justify-content:space-between;">
+            <span>Views:</span>
+            <span style="color:var(--nf-gold); font-weight:600;">{{ media.view_count }}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span>Likes:</span>
+            <span style="color:#fff;">{{ media.like_count }}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span>Uploaded:</span>
+            <span style="color:#fff;">{{ media.created_at.strftime('%b %d, %Y') if media.created_at else '—' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Replace File Card -->
+      <div class="card" style="padding:1.25rem; background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px;">
+        <h4 style="font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:#fff; margin:0 0 0.5rem;">
+          Replace Asset File
+        </h4>
+        <p style="font-size:0.75rem; color:var(--nf-text-dim); margin:0 0 1rem; line-height:1.4;">
+          Overwrite the underlying file on storage while retaining existing view statistics and like counters.
+        </p>
+        <form method="POST" action="{{ url_for('admin.edit_media', media_id=media.id) }}" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <input type="hidden" name="action" value="replace_file" />
+          <input type="file" name="replace_file" required style="font-size:0.75rem; color:#aaa; margin-bottom:0.75rem; width:100%;" />
+          <button type="submit" class="btn btn-ghost btn-sm" style="width:100%; justify-content:center;">
+            Replace File
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

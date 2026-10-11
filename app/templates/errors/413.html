@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>413 — File Too Large | NativeFrames</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+  <link rel="icon" href="{{ url_for('static', filename='images/nativeframes-logo.jpg') }}" type="image/jpeg" />
+</head>
+<body style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#080808;color:#f0f0f0;text-align:center;padding:2rem;">
+  <div style="max-width:480px;background:#121214;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:3rem 2rem;box-shadow:0 24px 60px rgba(0,0,0,0.8);">
+    <div style="font-size:4rem;font-weight:800;color:#f59e0b;line-height:1;margin-bottom:1rem;letter-spacing:-0.05em;">413</div>
+    <h1 style="font-size:1.5rem;font-weight:600;margin-bottom:0.75rem;color:#fff;">Upload Limit Exceeded</h1>
+    <p style="color:var(--nf-text-dim);font-size:0.95rem;line-height:1.6;margin-bottom:2rem;">
+      The uploaded file exceeds the configured maximum upload size limit. Please compress your media file or adjust MAX_CONTENT_LENGTH in the configuration.
+    </p>
+    <div style="display:flex;gap:1rem;justify-content:center;">
+      <a href="{{ url_for('admin.upload_media') }}" class="btn btn-primary" style="padding:0.75rem 1.5rem;border-radius:8px;">Back to Upload</a>
+      <a href="{{ url_for('admin.dashboard') }}" class="btn btn-ghost" style="padding:0.75rem 1.5rem;border-radius:8px;">Dashboard</a>
+    </div>
+  </div>
+</body>
+</html>
