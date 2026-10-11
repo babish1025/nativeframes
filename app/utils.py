@@ -107,6 +107,14 @@ def allowed_file(filename: str, allowed_exts: set) -> bool:
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_exts
 
 
+def _get_active_upload_base() -> str:
+    upload_base = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+    if upload_base.startswith('/var/task'):
+        upload_base = '/tmp/uploads'
+        current_app.config['UPLOAD_FOLDER'] = upload_base
+    return upload_base
+
+
 def save_upload(file_obj, subfolder: str, allowed_exts: set | None = None) -> tuple[str, str, int]:
     """
     Save an uploaded file to uploads/<subfolder>/.
@@ -117,11 +125,28 @@ def save_upload(file_obj, subfolder: str, allowed_exts: set | None = None) -> tu
 
     ext = Path(secure_filename(file_obj.filename)).suffix.lower()
     stored_name = f'{uuid.uuid4().hex}{ext}'
-    upload_base = current_app.config['UPLOAD_FOLDER']
+    upload_base = _get_active_upload_base()
     dest_dir = os.path.join(upload_base, subfolder)
-    os.makedirs(dest_dir, exist_ok=True)
+
+    try:
+        os.makedirs(dest_dir, exist_ok=True)
+    except OSError:
+        upload_base = '/tmp/uploads'
+        current_app.config['UPLOAD_FOLDER'] = upload_base
+        dest_dir = os.path.join(upload_base, subfolder)
+        os.makedirs(dest_dir, exist_ok=True)
+
     dest_path = os.path.join(dest_dir, stored_name)
-    file_obj.save(dest_path)
+    try:
+        file_obj.save(dest_path)
+    except OSError:
+        upload_base = '/tmp/uploads'
+        current_app.config['UPLOAD_FOLDER'] = upload_base
+        dest_dir = os.path.join(upload_base, subfolder)
+        os.makedirs(dest_dir, exist_ok=True)
+        dest_path = os.path.join(dest_dir, stored_name)
+        file_obj.save(dest_path)
+
     file_size = os.path.getsize(dest_path)
     storage_path = f'{subfolder}/{stored_name}'
     return stored_name, storage_path, file_size
@@ -131,7 +156,7 @@ def delete_file_safe(relative_path: str):
     """Delete a file from the uploads directory, ignoring missing-file errors."""
     if not relative_path:
         return
-    upload_base = current_app.config['UPLOAD_FOLDER']
+    upload_base = _get_active_upload_base()
     full_path = os.path.join(upload_base, relative_path)
     try:
         if os.path.exists(full_path):
@@ -144,9 +169,16 @@ def generate_image_thumbnail(source_path: str, thumb_filename: str, size=(400, 3
     """Generate a thumbnail using Pillow. Returns relative thumbnail path or None."""
     try:
         from PIL import Image
-        upload_base = current_app.config['UPLOAD_FOLDER']
+        upload_base = _get_active_upload_base()
         thumb_dir = os.path.join(upload_base, 'thumbnails')
-        os.makedirs(thumb_dir, exist_ok=True)
+        try:
+            os.makedirs(thumb_dir, exist_ok=True)
+        except OSError:
+            upload_base = '/tmp/uploads'
+            current_app.config['UPLOAD_FOLDER'] = upload_base
+            thumb_dir = os.path.join(upload_base, 'thumbnails')
+            os.makedirs(thumb_dir, exist_ok=True)
+
         thumb_path = os.path.join(thumb_dir, thumb_filename)
         with Image.open(source_path) as img:
             img.thumbnail(size, Image.LANCZOS)

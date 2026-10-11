@@ -69,6 +69,34 @@ def _db_uri():
 
 
 
+def _upload_folder():
+    """
+    Determine the upload directory.
+    Vercel/serverless environments have a strictly read-only filesystem except /tmp.
+    """
+    is_serverless = (
+        bool(os.environ.get('VERCEL'))
+        or bool(os.environ.get('VERCEL_ENV'))
+        or bool(os.environ.get('VERCEL_URL'))
+        or bool(os.environ.get('VERCEL_REGION'))
+        or bool(os.environ.get('NOW_REGION'))
+        or bool(os.environ.get('AWS_LAMBDA_FUNCTION_NAME'))
+        or bool(os.environ.get('LAMBDA_TASK_ROOT'))
+        or os.path.abspath('.').startswith('/var/task')
+    )
+
+    custom = os.environ.get('UPLOAD_FOLDER')
+    if is_serverless:
+        # On serverless (Vercel / AWS Lambda), the entire filesystem is read-only except /tmp
+        if custom and custom.startswith('/tmp'):
+            return custom
+        return '/tmp/uploads'
+
+    if custom:
+        return os.path.abspath(custom)
+    return os.path.abspath('uploads')
+
+
 class BaseConfig:
     # Core
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-fallback-please-change-in-prod')
@@ -90,12 +118,7 @@ class BaseConfig:
         }
 
     # Uploads — use /tmp on serverless (Vercel fs is read-only except /tmp)
-    UPLOAD_FOLDER = os.environ.get(
-        'UPLOAD_FOLDER',
-        '/tmp/uploads' if os.environ.get('VERCEL') else os.path.abspath('uploads')
-    )
-    if not os.path.isabs(UPLOAD_FOLDER):
-        UPLOAD_FOLDER = os.path.abspath(UPLOAD_FOLDER)
+    UPLOAD_FOLDER = _upload_folder()
     MAX_CONTENT_LENGTH = int(os.environ.get('MAX_UPLOAD_MB', 500)) * 1024 * 1024
 
 

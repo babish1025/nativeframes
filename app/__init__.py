@@ -85,7 +85,12 @@ def create_app(env: str = 'default') -> Flask:
         # Viewers must be logged in; admins always allowed
         if not session.get('admin_logged') and not session.get('viewer_token'):
             abort(403)
-        upload_dir = app.config['UPLOAD_FOLDER']
+        upload_dir = app.config.get('UPLOAD_FOLDER', 'uploads')
+        if not os.path.exists(os.path.join(upload_dir, filename)):
+            if os.path.exists(os.path.join('/tmp/uploads', filename)):
+                upload_dir = '/tmp/uploads'
+            elif os.path.exists(os.path.join(os.path.abspath('uploads'), filename)):
+                upload_dir = os.path.abspath('uploads')
         return send_from_directory(upload_dir, filename)
 
     return app
@@ -93,13 +98,21 @@ def create_app(env: str = 'default') -> Flask:
 
 def _ensure_upload_dirs(app: Flask):
     """Create upload subdirectories. Silently skips on read-only filesystems (e.g. Vercel)."""
-    base = app.config['UPLOAD_FOLDER']
+    base = app.config.get('UPLOAD_FOLDER', 'uploads')
+    if base.startswith('/var/task'):
+        base = '/tmp/uploads'
+        app.config['UPLOAD_FOLDER'] = base
     for sub in ('photos', 'videos', 'audio', 'thumbnails'):
         path = os.path.join(base, sub)
         try:
             os.makedirs(path, exist_ok=True)
         except OSError:
-            pass
+            if base != '/tmp/uploads':
+                app.config['UPLOAD_FOLDER'] = '/tmp/uploads'
+                try:
+                    os.makedirs(os.path.join('/tmp/uploads', sub), exist_ok=True)
+                except OSError:
+                    pass
 
 
 def _seed_defaults(app: Flask):

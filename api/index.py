@@ -6,6 +6,9 @@ It must export a variable named `app` that is a WSGI callable.
 import os
 import sys
 
+# Explicitly flag Vercel serverless environment
+os.environ['VERCEL'] = '1'
+
 # Ensure the project root is on the path so `app` package is importable
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
