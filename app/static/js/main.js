@@ -133,6 +133,26 @@ const Lightbox = {
       if (e.key === 'ArrowLeft')   this.navigate(-1);
       if (e.key === 'ArrowRight')  this.navigate(1);
     });
+
+    // Mobile touch swipe gestures
+    let touchStartX = 0;
+    let touchStartY = 0;
+    this.overlay.addEventListener('touchstart', e => {
+      if (e.touches && e.touches.length === 1) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      }
+    }, { passive: true });
+    this.overlay.addEventListener('touchend', e => {
+      if (e.changedTouches && e.changedTouches.length === 1) {
+        const diffX = e.changedTouches[0].clientX - touchStartX;
+        const diffY = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+          if (diffX < 0) this.navigate(1);
+          else this.navigate(-1);
+        }
+      }
+    }, { passive: true });
   },
 
   open(items, index = 0) {

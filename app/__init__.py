@@ -118,15 +118,20 @@ def _ensure_upload_dirs(app: Flask):
 def _seed_defaults(app: Flask):
     """Create default admin account and app settings if they don't exist."""
     # Default admin
-    if not Admin.query.first():
+    admin = Admin.query.first()
+    if not admin:
         admin = Admin(
             username     = app.config['ADMIN_USERNAME'],
-            display_name = 'NativeFrames Admin',
+            display_name = 'Native Frames Admin',
         )
         admin.set_password(app.config['ADMIN_PASSWORD'])
         db.session.add(admin)
         db.session.commit()
         logger.info('Default admin account created: %s', app.config['ADMIN_USERNAME'])
+    else:
+        admin.set_password(app.config['ADMIN_PASSWORD'])
+        db.session.commit()
+        logger.info('Admin password synchronized with configuration.')
 
     # Default settings
     defaults = {
@@ -136,7 +141,7 @@ def _seed_defaults(app: Flask):
         'allow_comments':    '0',
         'allow_share_links': '0',
         'show_view_counts':  '0',
-        'gallery_title':     'NativeFrames Gallery',
+        'gallery_title':     'Native Frames Gallery',
         'gallery_subtitle':  'Every frame tells a story.',
         'items_per_page':    '24',
     }

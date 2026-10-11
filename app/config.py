@@ -135,7 +135,7 @@ class BaseConfig:
 
     # Admin
     ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
-    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'NativeFrames@2024')
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'Nativeframes@2026')
 
     # Rate limiting (simple in-memory store)
     LOGIN_MAX_ATTEMPTS = 5

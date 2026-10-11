@@ -1,62 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NativeFrames — Every frame tells a story.</title>
-  <meta name="description" content="NativeFrames — Premium private media gallery. Promotions, Brand Films, Social Content." />
+  <title>Native Frames — Every frame tells a story.</title>
+  <meta name="description"
+    content="Native Frames — Premium private media gallery. Promotions, Brand Films, Social Content." />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
   <link rel="icon" href="{{ url_for('static', filename='images/nativeframes-logo.jpg') }}" type="image/jpeg" />
 </head>
+
 <body>
 
-<div class="welcome-page">
+  <div class="welcome-page">
 
-  <!-- Decorative film strip lines -->
-  <div style="position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden;pointer-events:none;" aria-hidden="true">
-    <div style="position:absolute;top:0;left:25%;width:1px;height:100%;background:linear-gradient(to bottom,transparent,rgba(212,175,55,.08),transparent);"></div>
-    <div style="position:absolute;top:0;right:25%;width:1px;height:100%;background:linear-gradient(to bottom,transparent,rgba(212,175,55,.06),transparent);"></div>
-  </div>
-
-  <div class="welcome-hero">
-    <img class="welcome-logo"
-         src="{{ url_for('static', filename='images/nativeframes-logo.jpg') }}"
-         alt="NativeFrames logo" />
-
-    <div class="welcome-line"></div>
-
-    <h1 class="welcome-title serif">NATIVEFRAMES</h1>
-
-    <div class="welcome-services">
-      <span>PROMOTIONS</span>
-      <span>|</span>
-      <span>BRAND FILMS</span>
-      <span>|</span>
-      <span>SOCIAL CONTENT</span>
+    <!-- Decorative film strip lines -->
+    <div style="position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden;pointer-events:none;"
+      aria-hidden="true">
+      <div
+        style="position:absolute;top:0;left:25%;width:1px;height:100%;background:linear-gradient(to bottom,transparent,rgba(212,175,55,.08),transparent);">
+      </div>
+      <div
+        style="position:absolute;top:0;right:25%;width:1px;height:100%;background:linear-gradient(to bottom,transparent,rgba(212,175,55,.06),transparent);">
+      </div>
     </div>
 
-    <p class="welcome-tagline">Every frame tells a story.</p>
+    <div class="welcome-hero">
+      <img class="welcome-logo" src="{{ url_for('static', filename='images/nativeframes-logo.jpg') }}"
+        alt="Native Frames logo"
+        style="border-radius:50%; object-fit:cover; border:2px solid var(--nf-gold); box-shadow:0 0 25px rgba(212,175,55,0.35);" />
 
-    <div class="welcome-line"></div>
+      <div class="welcome-line"></div>
 
-    <div class="welcome-actions">
-      <a href="{{ url_for('auth.viewer_entry') }}" class="btn btn-primary btn-lg">
-        Enter Gallery
-      </a>
-      <a href="{{ url_for('auth.admin_login') }}" class="btn btn-ghost btn-lg" style="font-size:.85rem;">
-        Admin →
-      </a>
+      <h1 class="welcome-title serif">NATIVE FRAMES</h1>
+
+      <div class="welcome-services">
+        <span>BRAND FILMS</span>
+        <span>|</span>
+        <span>SOCIAL CONTENT</span>
+        <span>|</span>
+        <span>PROMOTIONS</span>
+      </div>
+
+      <p class="welcome-tagline">Every frame tells a story.</p>
+
+      <div class="welcome-line"></div>
+
+      <div class="welcome-actions">
+        <a href="{{ url_for('auth.viewer_entry') }}" class="btn btn-primary btn-lg">
+          Enter Gallery
+        </a>
+        <a href="{{ url_for('auth.admin_login') }}" class="btn btn-ghost btn-lg" style="font-size:.85rem;">
+          Admin →
+        </a>
+      </div>
     </div>
+
+    <!-- Footer -->
+    <footer
+      style="text-align:center;padding:1.5rem;color:var(--nf-text-dim);font-size:.75rem;border-top:1px solid var(--nf-border);">
+      © {{ now.year if now else 2024 }} Native Frames. All rights reserved.
+      &nbsp;·&nbsp; <a href="{{ url_for('auth.viewer_entry') }}" style="color:var(--nf-gold);">Enter Gallery</a>
+    </footer>
+
   </div>
 
-  <!-- Footer -->
-  <footer style="text-align:center;padding:1.5rem;color:var(--nf-text-dim);font-size:.75rem;border-top:1px solid var(--nf-border);">
-    © {{ now.year if now else 2024 }} NativeFrames. All rights reserved.
-    &nbsp;·&nbsp; <a href="{{ url_for('auth.viewer_entry') }}" style="color:var(--nf-gold);">Enter Gallery</a>
-  </footer>
-
-</div>
-
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
+
 </html>

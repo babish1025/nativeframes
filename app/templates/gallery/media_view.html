@@ -31,7 +31,7 @@
   <div style="background:#111114; border:1px solid rgba(255,255,255,0.08); border-radius:16px; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,0.8); margin-bottom:2rem;">
     
     <!-- Player/Display Area -->
-    <div style="background:#000; display:flex; justify-content:center; align-items:center; min-height:480px; max-height:80vh; position:relative;">
+    <div class="media-showcase-player" style="background:#000; display:flex; justify-content:center; align-items:center; min-height:480px; max-height:80vh; position:relative;">
       {% if media.media_type == 'video' %}
         <video id="player-video"
                data-media-id="{{ media.id }}"
@@ -111,8 +111,8 @@
       </div>
 
       <!-- Actions (Like, Fav, Download, Views) -->
-      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:1rem;">
-        <div style="display:flex; align-items:center; gap:0.75rem;">
+      <div class="media-showcase-actions" style="display:flex; flex-direction:column; align-items:flex-end; gap:1rem;">
+        <div class="media-showcase-actions-row" style="display:flex; align-items:center; gap:0.75rem;">
           {% if cfg.get('allow_likes','1') == '1' %}
           <button class="btn btn-ghost media-action-btn {% if media.id in like_ids %}active{% endif %}"
                   data-action="like"
