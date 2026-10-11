@@ -9,30 +9,52 @@ load_dotenv()
 
 
 def _db_uri():
-    """Build DB URI. Priority: USE_SQLITE > DATABASE_URL > individual vars > SQLite fallback."""
+    """
+    Build the SQLAlchemy database URI.
+
+    Priority order (first match wins):
+      1. USE_SQLITE=1           → local SQLite (dev/testing only)
+      2. DATABASE_URL           → use as-is (any valid SQLAlchemy URL)
+      3. Railway TCP proxy vars → MYSQLUSER + MYSQLPASSWORD +
+                                  RAILWAY_TCP_PROXY_DOMAIN + RAILWAY_TCP_PROXY_PORT +
+                                  MYSQLDATABASE   (copy these 5 from Railway → Vercel)
+      4. Generic DB_* vars      → DB_HOST + DB_PORT + DB_USER + DB_PASSWORD + DB_NAME
+      5. Fallback                → SQLite on /tmp (Vercel-safe cold-start)
+    """
     if os.environ.get('USE_SQLITE', '').lower() in ('1', 'true'):
         return 'sqlite:////tmp/nativeframes.db'
 
+    # --- Priority 2: explicit DATABASE_URL ---
     url = os.environ.get('DATABASE_URL', '')
     if url:
         if url.startswith('sqlite:'):
             return url
-        # Ensure we use the pymysql driver
+        # Normalise driver name
         if url.startswith('mysql://'):
             url = url.replace('mysql://', 'mysql+pymysql://', 1)
-
-        # If pointing to internal Railway domain from outside Railway (local dev or Vercel)
+        # Railway internal hostname is not reachable from Vercel
         if 'railway.internal' in url:
             import socket
             try:
                 socket.gethostbyname('mysql.railway.internal')
             except (socket.gaierror, OSError):
-                # Unreachable — fall back to SQLite for safe cold-start
                 return 'sqlite:////tmp/nativeframes.db'
-
         return url
 
-    # Individual DB_* vars set → build URI
+    # --- Priority 3: Railway TCP proxy individual vars ---
+    # Copy these five vars from Railway dashboard → Vercel Environment Variables
+    rly_host = os.environ.get('RAILWAY_TCP_PROXY_DOMAIN', '')
+    rly_port = os.environ.get('RAILWAY_TCP_PROXY_PORT', '')
+    rly_user = os.environ.get('MYSQLUSER', '')
+    rly_pw   = os.environ.get('MYSQLPASSWORD', '')
+    rly_db   = os.environ.get('MYSQLDATABASE', 'railway')
+    if rly_host and rly_port and rly_user:
+        return (
+            f'mysql+pymysql://{rly_user}:{rly_pw}'
+            f'@{rly_host}:{rly_port}/{rly_db}?charset=utf8mb4'
+        )
+
+    # --- Priority 4: generic DB_* vars ---
     host = os.environ.get('DB_HOST', '')
     if host and host not in ('localhost', '127.0.0.1'):
         port = os.environ.get('DB_PORT', '3306')
@@ -41,8 +63,9 @@ def _db_uri():
         name = os.environ.get('DB_NAME', 'railway')
         return f'mysql+pymysql://{user}:{pw}@{host}:{port}/{name}?charset=utf8mb4'
 
-    # No usable database credentials found — use SQLite (safe for serverless cold-start)
+    # --- Priority 5: safe SQLite fallback ---
     return 'sqlite:////tmp/nativeframes.db'
+
 
 
 
