@@ -12,8 +12,8 @@
       ‹ Back to {{ media.folder.name }}
     </a>
     {% else %}
-    <a href="{{ url_for('gallery.index', tab=media.media_type + 's' if media.media_type in ('photo','video') else media.media_type) }}" style="color:var(--nf-gold); font-size:0.875rem; text-decoration:none; display:flex; align-items:center; gap:0.35rem;">
-      ‹ Back to Gallery
+    <a href="{{ url_for('gallery.index') }}" style="color:var(--nf-gold); font-size:0.875rem; text-decoration:none; display:flex; align-items:center; gap:0.35rem;">
+      ‹ Back to Folders
     </a>
     {% endif %}
 

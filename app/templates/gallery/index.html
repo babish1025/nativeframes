@@ -3,212 +3,238 @@
 {% block title %}{{ cfg.get('gallery_title', 'NativeFrames Gallery') }} — Every frame tells a story.{% endblock %}
 
 {% block content %}
-<div class="gallery-container" style="max-width:1440px; margin:0 auto; padding:1.5rem 1.5rem 3rem;">
+<div class="gallery-container" style="max-width:1440px; margin:0 auto; padding:1.5rem 1.5rem 3.5rem;">
 
-  <!-- ===================== HEADER / SUB-BAR ===================== -->
-  <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1.5rem;">
-    <div>
-      <h1 style="font-size:1.6rem; font-weight:700; color:#fff; margin:0 0 0.25rem; letter-spacing:-0.02em;">
-        {% if tab == 'photos' %}Photo Stills
-        {% elif tab == 'videos' %}Motion & Cinema
-        {% elif tab == 'audio' %}Music & Soundscapes
-        {% elif tab == 'favourites' %}Your Favourites
-        {% else %}Gallery Collections
-        {% endif %}
-      </h1>
-      <p style="color:var(--nf-text-dim); font-size:0.875rem; margin:0;">
-        {% if search %}
-          Found {{ pagination.total }} results matching "<span style="color:var(--nf-gold);">{{ search }}</span>"
-          <a href="{{ url_for('gallery.index', tab=tab) }}" style="color:var(--nf-gold); margin-left:0.5rem; text-decoration:underline;">Clear</a>
-        {% else %}
-          {{ cfg.get('gallery_subtitle', 'Every frame tells a story.') }}
-        {% endif %}
-      </p>
-    </div>
-
-    <!-- Folder Quick Filter Dropdown or Pills -->
-    {% if folders %}
-    <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-      <span style="font-size:0.75rem; color:var(--nf-text-dim); text-transform:uppercase; letter-spacing:0.05em; font-weight:600;">Folders:</span>
-      <a href="{{ url_for('gallery.index', tab=tab) }}"
-         class="badge {% if not filter_folder %}badge-gold{% else %}badge-ghost{% endif %}"
-         style="text-decoration:none; padding:0.35rem 0.75rem; border-radius:20px; font-size:0.8rem;">
-        All
-      </a>
-      {% for f in folders %}
-      <a href="{{ url_for('gallery.index', tab=tab, folder_id=f.id) }}"
-         class="badge {% if filter_folder == f.id|string %}badge-gold{% else %}badge-ghost{% endif %}"
-         style="text-decoration:none; padding:0.35rem 0.75rem; border-radius:20px; font-size:0.8rem;">
-        📁 {{ f.name }}
-      </a>
-      {% endfor %}
-    </div>
-    {% endif %}
-  </div>
-
-  <!-- ===================== MEDIA GRID ===================== -->
-  {% if media %}
-  <div class="gallery-grid" id="gallery-grid">
-    {% for m in media %}
-    <div class="media-card"
-         tabindex="0"
-         role="button"
-         data-media-id="{{ m.id }}"
-         data-type="{{ m.media_type }}"
-         {% if m.media_type == 'photo' %}
-           data-src="{{ url_for('uploaded_file', filename=m.storage_path) }}"
-           data-title="{{ m.title }}"
-           data-caption="{{ m.description or '' }}"
-         {% elif m.media_type == 'video' %}
-           data-href="{{ url_for('gallery.media_view', media_id=m.id) }}"
-         {% elif m.media_type == 'audio' %}
-           data-src="{{ url_for('uploaded_file', filename=m.storage_path) }}"
-           data-title="{{ m.title }}"
-           data-artist="{{ m.artist or '' }}"
-           data-thumb="{{ url_for('uploaded_file', filename=m.thumbnail_path) if m.thumbnail_path else '' }}"
-         {% endif %}>
-      
-      <!-- Media Thumbnail / Poster -->
-      <div class="media-thumb-wrap" style="position:relative; width:100%; aspect-ratio:16/10; overflow:hidden; background:#141416; border-radius:12px;">
-        {% if m.media_type == 'photo' %}
-          <img class="media-thumb"
-               src="{{ url_for('uploaded_file', filename=m.thumbnail_path) if m.thumbnail_path else url_for('uploaded_file', filename=m.storage_path) }}"
-               alt="{{ m.title }}"
-               loading="lazy"
-               style="width:100%; height:100%; object-fit:cover; transition:transform 0.4s ease;" />
-        {% elif m.media_type == 'video' %}
-          {% if m.thumbnail_path %}
-            <img class="media-thumb"
-                 src="{{ url_for('uploaded_file', filename=m.thumbnail_path) }}"
-                 alt="{{ m.title }}"
-                 loading="lazy"
-                 style="width:100%; height:100%; object-fit:cover; transition:transform 0.4s ease;" />
-          {% else %}
-            <div class="media-thumb-placeholder" style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#1c1c22; color:var(--nf-gold);">
-              <span style="font-size:2.5rem;">🎬</span>
-            </div>
-          {% endif %}
-          <div class="play-overlay" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:48px; height:48px; background:rgba(0,0,0,0.7); border:1.5px solid var(--nf-gold); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--nf-gold); font-size:1.2rem; pointer-events:none;">
-            ▶
-          </div>
-        {% elif m.media_type == 'audio' %}
-          {% if m.thumbnail_path %}
-            <img class="media-thumb"
-                 src="{{ url_for('uploaded_file', filename=m.thumbnail_path) }}"
-                 alt="{{ m.title }}"
-                 loading="lazy"
-                 style="width:100%; height:100%; object-fit:cover; transition:transform 0.4s ease;" />
-          {% else %}
-            <div class="media-thumb-placeholder" style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(135deg, #1f1b2e 0%, #111116 100%); color:#a78bfa;">
-              <span style="font-size:2.5rem;">🎵</span>
-            </div>
-          {% endif %}
-          <div class="play-overlay" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:48px; height:48px; background:rgba(0,0,0,0.7); border:1.5px solid #a78bfa; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#a78bfa; font-size:1.2rem; pointer-events:none;">
-            ♪
-          </div>
-        {% endif %}
-
-        <!-- Badge Type & Duration -->
-        <div style="position:absolute; top:8px; left:8px; display:flex; gap:4px; z-index:2;">
-          <span class="media-type-badge {{ m.media_type }}" style="font-size:0.65rem; font-weight:700; text-transform:uppercase; padding:0.2rem 0.5rem; border-radius:4px; letter-spacing:0.04em;">
-            {{ m.media_type }}
-          </span>
-          {% if m.duration_seconds and m.duration_seconds > 0 %}
-          <span class="media-duration" style="background:rgba(0,0,0,0.75); color:#fff; font-size:0.65rem; padding:0.2rem 0.4rem; border-radius:4px;">
-            {{ format_duration(m.duration_seconds) }}
-          </span>
-          {% endif %}
-        </div>
-
-        <!-- Hover Overlay Details -->
-        <div class="media-overlay" style="position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.3) 60%, transparent 100%); display:flex; flex-direction:column; justify-content:flex-end; padding:1rem; opacity:0; transition:opacity 0.3s ease; z-index:3;">
-          <h3 class="media-title" style="color:#fff; font-size:1rem; font-weight:600; margin:0 0 0.25rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ m.title }}</h3>
-          {% if m.artist %}
-          <div style="font-size:0.8rem; color:var(--nf-gold); margin-bottom:0.25rem;">{{ m.artist }}</div>
-          {% endif %}
-          <div class="media-meta" style="font-size:0.75rem; color:#aaa; display:flex; justify-content:space-between; align-items:center; margin-top:0.25rem;">
-            <span>👁 {{ m.view_count }}</span>
-            <div class="media-actions" style="display:flex; gap:6px;">
-              {% if cfg.get('allow_likes','1') == '1' %}
-              <button class="media-action-btn {% if m.id in like_ids %}active{% endif %}"
-                      data-action="like"
-                      data-media-id="{{ m.id }}"
-                      aria-label="Like"
-                      title="Like">
-                ♥ <span class="like-count">{{ m.like_count }}</span>
-              </button>
-              {% endif %}
-              {% if cfg.get('allow_favourites','1') == '1' %}
-              <button class="media-action-btn {% if m.id in fav_ids %}active{% endif %}"
-                      data-action="favourite"
-                      data-media-id="{{ m.id }}"
-                      aria-label="Favourite"
-                      title="Add to favourites">
-                ★
-              </button>
-              {% endif %}
-            </div>
-          </div>
-        </div>
+  <!-- ===================== SEARCH RESULTS VIEW ===================== -->
+  {% if is_search %}
+    <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:2rem;">
+      <div>
+        <a href="{{ url_for('gallery.index') }}" style="color:var(--nf-gold); font-size:0.875rem; text-decoration:none; display:inline-flex; align-items:center; gap:0.35rem; margin-bottom:0.5rem;">
+          ‹ Back to Folders
+        </a>
+        <h1 style="font-size:1.6rem; font-weight:700; color:#fff; margin:0 0 0.25rem;">
+          Search Results
+        </h1>
+        <p style="color:var(--nf-text-dim); font-size:0.875rem; margin:0;">
+          Found {{ pagination.total }} result{{ 's' if pagination.total != 1 else '' }} matching "<span style="color:var(--nf-gold);">{{ search }}</span>"
+        </p>
       </div>
+      <a href="{{ url_for('gallery.index') }}" class="btn btn-ghost btn-sm" style="border:1px solid rgba(212,175,55,0.3); color:var(--nf-gold);">
+        Clear Search
+      </a>
+    </div>
 
-      <!-- Card Title Bar (Mobile/Always visible fallback) -->
-      <div style="padding:0.6rem 0.25rem 0.25rem; display:flex; justify-content:space-between; align-items:baseline;">
-        <span style="font-size:0.875rem; font-weight:500; color:#ddd; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:80%;">{{ m.title }}</span>
-        {% if m.folder %}
-        <span style="font-size:0.7rem; color:var(--nf-text-dim);">📁 {{ m.folder.name }}</span>
+    {% if media %}
+      <div class="gallery-grid" id="gallery-grid">
+        {% for m in media %}
+          {% include "gallery/_media_card.html" %}
+        {% endfor %}
+      </div>
+      <!-- Pagination -->
+      {% if pagination.pages > 1 %}
+      <div class="pagination-bar" style="display:flex; justify-content:center; align-items:center; gap:0.5rem; margin-top:2.5rem;">
+        {% if pagination.has_prev %}
+        <a href="{{ url_for('gallery.index', page=pagination.prev_num, q=search) }}" class="btn btn-ghost btn-sm">‹ Prev</a>
+        {% endif %}
+        <span style="font-size:0.875rem; color:var(--nf-text-dim); padding:0 0.5rem;">
+          Page {{ pagination.page }} of {{ pagination.pages }}
+        </span>
+        {% if pagination.has_next %}
+        <a href="{{ url_for('gallery.index', page=pagination.next_num, q=search) }}" class="btn btn-ghost btn-sm">Next ›</a>
         {% endif %}
       </div>
-
-    </div>
-    {% endfor %}
-  </div>
-
-  <!-- Pagination -->
-  {% if pagination.pages > 1 %}
-  <div class="pagination-bar" style="display:flex; justify-content:center; align-items:center; gap:0.5rem; margin-top:2.5rem;">
-    {% if pagination.has_prev %}
-    <a href="{{ url_for('gallery.index', page=pagination.prev_num, tab=tab, q=search, folder_id=filter_folder) }}" class="btn btn-ghost btn-sm">‹ Prev</a>
-    {% endif %}
-    
-    <span style="font-size:0.875rem; color:var(--nf-text-dim); padding:0 0.5rem;">
-      Page {{ pagination.page }} of {{ pagination.pages }}
-    </span>
-
-    {% if pagination.has_next %}
-    <a href="{{ url_for('gallery.index', page=pagination.next_num, tab=tab, q=search, folder_id=filter_folder) }}" class="btn btn-ghost btn-sm">Next ›</a>
-    {% endif %}
-  </div>
-  {% endif %}
-
-  {% else %}
-  <!-- Empty State -->
-  <div style="text-align:center; padding:5rem 1rem; background:#121214; border:1px solid rgba(255,255,255,0.06); border-radius:16px; margin-top:1.5rem;">
-    <div style="font-size:3rem; margin-bottom:1rem; opacity:0.6;">🎞️</div>
-    <h3 style="font-size:1.25rem; color:#fff; font-weight:600; margin-bottom:0.5rem;">No Media Found</h3>
-    <p style="color:var(--nf-text-dim); max-width:400px; margin:0 auto 1.5rem; font-size:0.9rem;">
-      {% if search %}
-      No media matches your search query "{{ search }}". Try searching another term or clear the filter.
-      {% elif tab == 'favourites' %}
-      You haven't added any items to your favourites yet. Click the ★ icon on any frame to add it.
-      {% else %}
-      There are currently no published frames in this section. Check back soon!
       {% endif %}
-    </p>
-    {% if search or tab != 'all' or filter_folder %}
-    <a href="{{ url_for('gallery.index') }}" class="btn btn-primary btn-sm">View All Media</a>
+    {% else %}
+      <div style="text-align:center; padding:5rem 1rem; background:#121216; border:1px solid rgba(255,255,255,0.06); border-radius:16px;">
+        <div style="font-size:3rem; margin-bottom:1rem; opacity:0.6;">🔍</div>
+        <h3 style="font-size:1.25rem; color:#fff; font-weight:600; margin-bottom:0.5rem;">No media found</h3>
+        <p style="color:var(--nf-text-dim); max-width:420px; margin:0 auto 1.5rem; font-size:0.9rem;">
+          No items match your search for "{{ search }}". Try searching for a different keyword or return to folders.
+        </p>
+        <a href="{{ url_for('gallery.index') }}" class="btn btn-primary btn-sm">Back to Folders</a>
+      </div>
     {% endif %}
-  </div>
+
+  <!-- ===================== FAVOURITES VIEW ===================== -->
+  {% elif is_favourites %}
+    <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:2rem;">
+      <div>
+        <a href="{{ url_for('gallery.index') }}" style="color:var(--nf-gold); font-size:0.875rem; text-decoration:none; display:inline-flex; align-items:center; gap:0.35rem; margin-bottom:0.5rem;">
+          ‹ Back to Folders
+        </a>
+        <h1 style="font-size:1.6rem; font-weight:700; color:#fff; margin:0 0 0.25rem;">
+          Your Favourites
+        </h1>
+        <p style="color:var(--nf-text-dim); font-size:0.875rem; margin:0;">
+          Frames you've starred for quick access.
+        </p>
+      </div>
+    </div>
+
+    {% if media %}
+      <div class="gallery-grid" id="gallery-grid">
+        {% for m in media %}
+          {% include "gallery/_media_card.html" %}
+        {% endfor %}
+      </div>
+      {% if pagination.pages > 1 %}
+      <div class="pagination-bar" style="display:flex; justify-content:center; align-items:center; gap:0.5rem; margin-top:2.5rem;">
+        {% if pagination.has_prev %}
+        <a href="{{ url_for('gallery.index', tab='favourites', page=pagination.prev_num) }}" class="btn btn-ghost btn-sm">‹ Prev</a>
+        {% endif %}
+        <span style="font-size:0.875rem; color:var(--nf-text-dim); padding:0 0.5rem;">
+          Page {{ pagination.page }} of {{ pagination.pages }}
+        </span>
+        {% if pagination.has_next %}
+        <a href="{{ url_for('gallery.index', tab='favourites', page=pagination.next_num) }}" class="btn btn-ghost btn-sm">Next ›</a>
+        {% endif %}
+      </div>
+      {% endif %}
+    {% else %}
+      <div style="text-align:center; padding:5rem 1rem; background:#121216; border:1px solid rgba(255,255,255,0.06); border-radius:16px;">
+        <div style="font-size:3rem; margin-bottom:1rem; opacity:0.6;">★</div>
+        <h3 style="font-size:1.25rem; color:#fff; font-weight:600; margin-bottom:0.5rem;">No favourites yet</h3>
+        <p style="color:var(--nf-text-dim); max-width:400px; margin:0 auto 1.5rem; font-size:0.9rem;">
+          You haven't marked any media as a favourite yet. Explore folders and click the ★ icon on any frame.
+        </p>
+        <a href="{{ url_for('gallery.index') }}" class="btn btn-primary btn-sm">Browse Folders</a>
+      </div>
+    {% endif %}
+
+  <!-- ===================== DEFAULT VIEWER HOME: FOLDER CARDS ===================== -->
+  {% else %}
+    <!-- Hero / Gallery Welcome Header -->
+    <div style="margin-bottom:2.25rem; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-end; gap:1rem; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:1.5rem;">
+      <div>
+        <div style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.25rem 0.75rem; background:rgba(212,175,55,0.1); border:1px solid rgba(212,175,55,0.25); border-radius:20px; font-size:0.75rem; color:var(--nf-gold); font-weight:600; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.75rem;">
+          <span>📁</span> Curated Collections
+        </div>
+        <h1 style="font-size:clamp(1.75rem, 3.5vw, 2.4rem); font-weight:700; color:#fff; margin:0 0 0.4rem; letter-spacing:-0.02em;">
+          Media Folders
+        </h1>
+        <p style="color:var(--nf-text-dim); font-size:0.95rem; margin:0; max-width:600px;">
+          {{ cfg.get('gallery_subtitle', 'Select a folder to view photos, cinema, and audio recordings.') }}
+        </p>
+      </div>
+
+      {% if folders %}
+      <div style="color:var(--nf-text-dim); font-size:0.85rem; background:rgba(255,255,255,0.03); padding:0.4rem 0.9rem; border-radius:20px; border:1px solid rgba(255,255,255,0.06);">
+        <span style="color:var(--nf-gold); font-weight:600;">{{ folders|length }}</span> folder{{ 's' if folders|length != 1 else '' }} available
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Folder Cards Grid -->
+    {% if folders %}
+      <div class="viewer-folders-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); gap:1.5rem;">
+        {% for f in folders %}
+        <a href="{{ url_for('gallery.folder_view', folder_id=f.id) }}"
+           class="viewer-folder-card"
+           id="folder-card-{{ f.id }}"
+           style="display:flex; flex-direction:column; background:rgba(20,21,26,0.95); border:1px solid rgba(255,255,255,0.08); border-radius:16px; overflow:hidden; text-decoration:none; transition:all 0.3s cubic-bezier(0.16,1,0.3,1); box-shadow:0 8px 24px rgba(0,0,0,0.5); position:relative;">
+
+          <!-- Thumbnail Cover -->
+          <div class="folder-card-thumb-wrap" style="position:relative; width:100%; aspect-ratio:16/10; overflow:hidden; background:#121318;">
+            {% set thumb_url = f.get_cover_thumbnail_url() %}
+            {% if thumb_url %}
+              <img src="{{ url_for('uploaded_file', filename=thumb_url) if not thumb_url.startswith('http') and not thumb_url.startswith('/') else thumb_url }}"
+                   alt="{{ f.name }}"
+                   loading="lazy"
+                   class="folder-card-img"
+                   style="width:100%; height:100%; object-fit:cover; transition:transform 0.4s ease;" />
+              <div style="position:absolute; inset:0; background:linear-gradient(to top, rgba(16,17,22,0.92) 0%, rgba(16,17,22,0.2) 60%, transparent 100%);"></div>
+            {% else %}
+              <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(135deg, rgba(30,32,42,0.9) 0%, rgba(16,17,22,0.95) 100%); position:relative;">
+                <div style="width:68px; height:68px; border-radius:16px; background:rgba(212,175,55,0.1); border:1px solid rgba(212,175,55,0.25); display:flex; align-items:center; justify-content:center; font-size:2rem; box-shadow:0 4px 20px rgba(0,0,0,0.4);">
+                  📁
+                </div>
+              </div>
+            {% endif %}
+
+            <!-- Subfolder badge if nested -->
+            {% if f.published_subfolders_count > 0 %}
+            <div style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.8); border:1px solid rgba(212,175,55,0.35); border-radius:20px; padding:0.25rem 0.6rem; font-size:0.72rem; color:var(--nf-gold); font-weight:600; display:flex; align-items:center; gap:0.3rem; backdrop-filter:blur(6px); z-index:2;">
+              <span>📂</span> {{ f.published_subfolders_count }} subfolder{{ 's' if f.published_subfolders_count != 1 else '' }}
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Card Content -->
+          <div style="padding:1.25rem; display:flex; flex-direction:column; flex:1; justify-content:space-between; gap:1rem;">
+            <div>
+              <h2 class="folder-card-title" style="color:#fff; font-size:1.15rem; font-weight:700; margin:0 0 0.4rem; letter-spacing:-0.01em; transition:color 0.2s ease;">
+                {{ f.name }}
+              </h2>
+              {% if f.description %}
+              <p style="color:var(--nf-text-dim); font-size:0.85rem; line-height:1.45; margin:0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                {{ f.description }}
+              </p>
+              {% else %}
+              <p style="color:var(--nf-text-dim); font-size:0.82rem; margin:0; font-style:italic;">
+                Click to explore contents
+              </p>
+              {% endif %}
+            </div>
+
+            <!-- Media Counts Pill Bar -->
+            <div style="display:flex; flex-wrap:wrap; gap:0.4rem; padding-top:0.75rem; border-top:1px solid rgba(255,255,255,0.06); font-size:0.75rem;">
+              <span class="badge" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); color:#ccc; border-radius:12px; padding:0.25rem 0.55rem; display:inline-flex; align-items:center; gap:0.3rem;">
+                📷 <strong style="color:#fff;">{{ f.published_photos_count }}</strong> Photos
+              </span>
+              <span class="badge" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); color:#ccc; border-radius:12px; padding:0.25rem 0.55rem; display:inline-flex; align-items:center; gap:0.3rem;">
+                🎬 <strong style="color:#fff;">{{ f.published_videos_count }}</strong> Videos
+              </span>
+              <span class="badge" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); color:#ccc; border-radius:12px; padding:0.25rem 0.55rem; display:inline-flex; align-items:center; gap:0.3rem;">
+                🎵 <strong style="color:#fff;">{{ f.published_audio_count }}</strong> Audio
+              </span>
+            </div>
+          </div>
+
+        </a>
+        {% endfor %}
+      </div>
+
+    {% else %}
+      <!-- Empty State: No published folders -->
+      <div style="text-align:center; padding:5.5rem 1.5rem; background:#121216; border:1px solid rgba(255,255,255,0.06); border-radius:20px; margin-top:1rem;">
+        <div style="font-size:3.5rem; margin-bottom:1rem; opacity:0.7;">📁</div>
+        <h3 style="font-size:1.35rem; color:#fff; font-weight:700; margin-bottom:0.5rem; letter-spacing:-0.01em;">
+          No folders available yet.
+        </h3>
+        <p style="color:var(--nf-text-dim); max-width:440px; margin:0 auto; font-size:0.92rem; line-height:1.5;">
+          Media collections published by the administrator will appear here. Please check back soon!
+        </p>
+      </div>
+    {% endif %}
+
   {% endif %}
 
 </div>
+
+<style>
+  .viewer-folder-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(212, 175, 55, 0.45) !important;
+    box-shadow: 0 16px 36px rgba(0,0,0,0.7), 0 0 24px rgba(212, 175, 55, 0.15) !important;
+  }
+  .viewer-folder-card:hover .folder-card-title {
+    color: var(--nf-gold) !important;
+  }
+  .viewer-folder-card:hover .folder-card-img {
+    transform: scale(1.05);
+  }
+</style>
 {% endblock %}
 
 {% block scripts %}
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    initGalleryCards();
-    initInteractions();
+    if (typeof initGalleryCards === 'function') {
+      initGalleryCards();
+    }
+    if (typeof initInteractions === 'function') {
+      initInteractions();
+    }
   });
 </script>
 {% endblock %}

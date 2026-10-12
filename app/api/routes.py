@@ -4,12 +4,43 @@ NativeFrames — API Routes (AJAX endpoints)
 import json
 from flask import Blueprint, request, jsonify, session, g, abort
 
-from ..models import (db, Media, ViewerSession, MediaLike,
+from sqlalchemy import desc
+
+from ..models import (db, Media, Folder, ViewerSession, MediaLike,
                       MediaFavourite, MediaEvent)
-from ..utils  import (viewer_required, log_event, utcnow,
+from ..utils  import (viewer_required, admin_required, log_event, utcnow,
                       setting_enabled, get_setting)
 
 api_bp = Blueprint('api', __name__)
+
+
+# ---------------------------------------------------------------------------
+# Folders — Admin JSON API
+# ---------------------------------------------------------------------------
+@api_bp.route('/folders', methods=['GET'])
+@admin_required
+def list_folders():
+    """
+    Return all folders as JSON for admin dropdowns and folder pickers.
+    GET /api/folders
+    Response: { "success": true, "folders": [{"id": 1, "name": "...", "parent_id": null}] }
+    """
+    try:
+        folders = Folder.query.order_by(Folder.sort_order, Folder.name).all()
+        return jsonify({
+            'success': True,
+            'folders': [
+                {
+                    'id':         f.id,
+                    'name':       f.name,
+                    'parent_id':  f.parent_id,
+                    'visibility': f.visibility_status,
+                }
+                for f in folders
+            ],
+        })
+    except Exception as exc:
+        return jsonify({'success': False, 'error': str(exc), 'folders': []}), 500
 
 
 def _get_vs():
@@ -150,3 +181,102 @@ def download_media(media_id):
             download_name=media.stored_filename,
         )
     return send_from_directory(upload_dir, media.storage_path, as_attachment=True)
+
+
+# ---------------------------------------------------------------------------
+# Gallery Folders — Viewer JSON API
+# ---------------------------------------------------------------------------
+@api_bp.route('/gallery/folders', methods=['GET'])
+def get_gallery_folders():
+    """
+    Return published folders with counts and thumbnails for viewer gallery navigation.
+    GET /api/gallery/folders?parent_id=X
+    """
+    try:
+        parent_id = request.args.get('parent_id')
+        q = Folder.query.filter_by(visibility_status='published')
+        if parent_id is not None:
+            if parent_id == '' or parent_id.lower() == 'null':
+                q = q.filter_by(parent_id=None)
+            elif parent_id.isdigit():
+                q = q.filter_by(parent_id=int(parent_id))
+        else:
+            # Default to top-level published folders
+            q = q.filter_by(parent_id=None)
+
+        folders = q.order_by(Folder.sort_order, Folder.name).all()
+        return jsonify({
+            'success': True,
+            'folders': [
+                {
+                    'id':               f.id,
+                    'name':             f.name,
+                    'description':      f.description,
+                    'parent_id':        f.parent_id,
+                    'cover_image':      f.get_cover_thumbnail_url(),
+                    'photos_count':     f.published_photos_count,
+                    'videos_count':     f.published_videos_count,
+                    'audio_count':      f.published_audio_count,
+                    'subfolders_count': f.published_subfolders_count,
+                }
+                for f in folders
+            ]
+        })
+    except Exception as exc:
+        return jsonify({'success': False, 'error': str(exc), 'folders': []}), 500
+
+
+# ---------------------------------------------------------------------------
+# Gallery Media — Viewer JSON API filtered by folder
+# ---------------------------------------------------------------------------
+@api_bp.route('/gallery/media', methods=['GET'])
+def get_gallery_media():
+    """
+    Return published media scoped strictly to a folder ID and optional media type.
+    GET /api/gallery/media?folder_id=1&type=video
+    """
+    try:
+        folder_id   = request.args.get('folder_id', type=int)
+        filter_type = request.args.get('type', '').strip().lower()
+        page        = request.args.get('page', 1, type=int)
+        per_page    = request.args.get('per_page', 24, type=int)
+
+        q = Media.query.filter_by(status='published').filter(Media.deleted_at == None)
+
+        if folder_id is not None:
+            q = q.filter(Media.folder_id == folder_id)
+
+        if filter_type in ('photos', 'photo'):
+            q = q.filter(Media.media_type == 'photo')
+        elif filter_type in ('videos', 'video'):
+            q = q.filter(Media.media_type == 'video')
+        elif filter_type in ('audio', 'music'):
+            q = q.filter(Media.media_type == 'audio')
+
+        q = q.order_by(desc(Media.published_at), desc(Media.created_at))
+        pagination = q.paginate(page=page, per_page=per_page, error_out=False)
+
+        return jsonify({
+            'success': True,
+            'folder_id': folder_id,
+            'total': pagination.total,
+            'page': pagination.page,
+            'pages': pagination.pages,
+            'media': [
+                {
+                    'id':             m.id,
+                    'title':          m.title,
+                    'media_type':     m.media_type,
+                    'folder_id':      m.folder_id,
+                    'storage_path':   m.storage_path,
+                    'thumbnail_path': m.thumbnail_path,
+                    'duration_seconds': m.duration_seconds,
+                    'view_count':     m.view_count,
+                    'like_count':     m.like_count,
+                }
+                for m in pagination.items
+            ]
+        })
+    except Exception as exc:
+        return jsonify({'success': False, 'error': str(exc), 'media': []}), 500
+

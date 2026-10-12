@@ -76,6 +76,43 @@ class Folder(BaseModel):
     def published_media_count(self):
         return self.media.filter_by(status='published').count()
 
+    @property
+    def published_photos_count(self):
+        return self.media.filter_by(status='published', media_type='photo').count()
+
+    @property
+    def published_videos_count(self):
+        return self.media.filter_by(status='published', media_type='video').count()
+
+    @property
+    def published_audio_count(self):
+        return self.media.filter_by(status='published', media_type='audio').count()
+
+    @property
+    def published_subfolders_count(self):
+        return self.children.filter_by(visibility_status='published').count()
+
+    @property
+    def published_subfolders(self):
+        return self.children.filter_by(visibility_status='published').order_by(Folder.sort_order, Folder.name).all()
+
+    def get_cover_thumbnail_url(self):
+        if self.cover_image:
+            return self.cover_image
+        item = (self.media.filter_by(status='published')
+                .order_by(Media.published_at.desc(), Media.created_at.desc())
+                .first())
+        if item:
+            if item.thumbnail_path:
+                return item.thumbnail_path
+            if item.storage_path and item.media_type == 'photo':
+                return item.storage_path
+        for child in self.children.filter_by(visibility_status='published').all():
+            child_thumb = child.get_cover_thumbnail_url()
+            if child_thumb:
+                return child_thumb
+        return None
+
     def __repr__(self):
         return f'<Folder {self.name}>'
 

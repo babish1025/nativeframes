@@ -178,7 +178,7 @@ def upload_media():
         caption    = request.form.get('caption', '').strip()
         tags       = request.form.get('tags', '').strip()
         media_type = request.form.get('media_type', '')
-        status     = request.form.get('status', 'draft')
+        status     = request.form.get('status', 'published')
         is_featured= request.form.get('is_featured') == '1'
         folder_id  = request.form.get('folder_id') or None
         artist     = request.form.get('artist', '').strip()

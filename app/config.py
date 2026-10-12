@@ -8,21 +8,49 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+def _sqlite_path():
+    """
+    Return the absolute path for the local persistent SQLite database.
+    Uses the Flask 'instance/' folder (standard Flask convention for instance data),
+    which is persistent across restarts.  Falls back to /tmp only on true serverless.
+    """
+    is_serverless = (
+        bool(os.environ.get('VERCEL'))
+        or bool(os.environ.get('VERCEL_ENV'))
+        or bool(os.environ.get('VERCEL_URL'))
+        or bool(os.environ.get('AWS_LAMBDA_FUNCTION_NAME'))
+        or os.path.abspath('.').startswith('/var/task')
+    )
+    if is_serverless:
+        return 'sqlite:////tmp/nativeframes.db'
+
+    # Use the instance/ directory relative to this file's parent package root
+    # This resolves to <project_root>/instance/nativeframes.db — always persistent.
+    base_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '..', 'instance')
+    )
+    os.makedirs(base_dir, exist_ok=True)
+    return f'sqlite:///{os.path.join(base_dir, "nativeframes.db")}'
+
+
 def _db_uri():
     """
     Build the SQLAlchemy database URI.
 
     Priority order (first match wins):
-      1. USE_SQLITE=1           → local SQLite (dev/testing only)
+      1. USE_SQLITE=1           → persistent local SQLite in instance/nativeframes.db
       2. DATABASE_URL           → use as-is (any valid SQLAlchemy URL)
+                                  If railway.internal DNS is unreachable (local dev),
+                                  falls back to persistent SQLite — NOT /tmp.
       3. Railway TCP proxy vars → MYSQLUSER + MYSQLPASSWORD +
                                   RAILWAY_TCP_PROXY_DOMAIN + RAILWAY_TCP_PROXY_PORT +
                                   MYSQLDATABASE   (copy these 5 from Railway → Vercel)
       4. Generic DB_* vars      → DB_HOST + DB_PORT + DB_USER + DB_PASSWORD + DB_NAME
-      5. Fallback                → SQLite on /tmp (Vercel-safe cold-start)
+      5. Fallback                → persistent SQLite in instance/ (local dev safe)
     """
     if os.environ.get('USE_SQLITE', '').lower() in ('1', 'true'):
-        return 'sqlite:////tmp/nativeframes.db'
+        # Priority 1: explicit SQLite flag → use persistent instance/ path
+        return _sqlite_path()
 
     # --- Priority 2: explicit DATABASE_URL ---
     url = os.environ.get('DATABASE_URL', '')
@@ -32,13 +60,15 @@ def _db_uri():
         # Normalise driver name
         if url.startswith('mysql://'):
             url = url.replace('mysql://', 'mysql+pymysql://', 1)
-        # Railway internal hostname is not reachable from Vercel
+        # Railway internal hostname is only reachable inside Railway's private network.
+        # In local dev the DNS lookup fails → fall back to the PERSISTENT instance/ SQLite,
+        # NOT /tmp (which is ephemeral and gets wiped between reboots on Windows/Mac).
         if 'railway.internal' in url:
             import socket
             try:
                 socket.gethostbyname('mysql.railway.internal')
             except (socket.gaierror, OSError):
-                return 'sqlite:////tmp/nativeframes.db'
+                return _sqlite_path()
         return url
 
     # --- Priority 3: Railway TCP proxy individual vars ---
@@ -63,8 +93,8 @@ def _db_uri():
         name = os.environ.get('DB_NAME', 'railway')
         return f'mysql+pymysql://{user}:{pw}@{host}:{port}/{name}?charset=utf8mb4'
 
-    # --- Priority 5: safe SQLite fallback ---
-    return 'sqlite:////tmp/nativeframes.db'
+    # --- Priority 5: persistent SQLite fallback (NOT /tmp) ---
+    return _sqlite_path()
 
 
 

@@ -1054,10 +1054,21 @@ select.form-control { cursor: pointer; }
   margin: 0 auto;
   flex-wrap: wrap;
 }
+.gallery-logo {
+  flex-shrink: 0;
+}
 .gallery-logo img {
   height: 44px;
-  width: auto;
-  object-fit: contain;
+  width: 44px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid var(--nf-gold);
+  box-shadow: 0 0 12px rgba(212,175,55,0.45);
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+.gallery-logo:hover img {
+  box-shadow: 0 0 20px rgba(212,175,55,0.7);
+  transform: scale(1.05);
 }
 .gallery-welcome {
   font-size: .85rem;
@@ -2043,3 +2054,145 @@ select.form-control { cursor: pointer; }
   outline: 2px solid var(--nf-gold);
   outline-offset: 2px;
 }
+
+/* ===================== ABOUT MODAL ===================== */
+.about-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(6px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+.about-modal-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+.about-modal {
+  background: linear-gradient(145deg, #14151a 0%, #0d0e12 100%);
+  border: 1px solid rgba(212,175,55,0.25);
+  border-radius: 20px;
+  max-width: 520px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.8), 0 0 40px rgba(212,175,55,0.08);
+  transform: translateY(20px) scale(0.97);
+  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
+}
+.about-modal-overlay.open .about-modal {
+  transform: translateY(0) scale(1);
+}
+.about-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  padding: 1.75rem 1.75rem 1.25rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.about-modal-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2.5px solid var(--nf-gold);
+  box-shadow: 0 0 16px rgba(212,175,55,0.5);
+  flex-shrink: 0;
+}
+.about-modal-brand h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 0.2rem;
+  letter-spacing: -0.02em;
+}
+.about-modal-brand p {
+  font-size: 0.8rem;
+  color: var(--nf-gold);
+  margin: 0;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.about-modal-body {
+  padding: 1.5rem 1.75rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.about-info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  transition: border-color 0.2s, background 0.2s;
+}
+.about-info-row:hover {
+  border-color: rgba(212,175,55,0.25);
+  background: rgba(212,175,55,0.04);
+}
+.about-info-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  width: 32px;
+  text-align: center;
+}
+.about-info-label {
+  font-size: 0.72rem;
+  color: var(--nf-text-dim);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.2rem;
+}
+.about-info-value {
+  font-size: 0.92rem;
+  color: #fff;
+  font-weight: 500;
+  word-break: break-word;
+}
+.about-info-value a {
+  color: var(--nf-gold);
+  text-decoration: none;
+}
+.about-info-value a:hover { text-decoration: underline; }
+.about-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+  margin: 0.25rem 0;
+}
+.about-close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.about-close-btn:hover { background: rgba(212,175,55,0.2); }
+.about-modal-wrapper { position: relative; }
+@media (max-width: 480px) {
+  .about-modal-header { padding: 1.25rem 1.25rem 1rem; }
+  .about-modal-body { padding: 1rem 1.25rem 1.25rem; }
+  .about-modal-brand h2 { font-size: 1.15rem; }
+  .about-modal-logo { width: 52px; height: 52px; }
+}
+

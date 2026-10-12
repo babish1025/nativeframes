@@ -1,5 +1,6 @@
 """
 NativeFrames — Gallery Routes (Viewer-facing)
+Folder-based media navigation, subfolders, category filters, and viewer media player.
 """
 import json
 from flask import (Blueprint, render_template, request, redirect,
@@ -22,8 +23,86 @@ def _get_viewer_session():
     return ViewerSession.query.filter_by(session_token=token, session_status='active').first()
 
 
+def get_folder_breadcrumbs(folder, active_type=None):
+    """
+    Build breadcrumb hierarchy:
+    Home > Events > College Day > Videos (if active_type is set and not 'all')
+    """
+    crumbs = [{'name': 'Home', 'url': url_for('gallery.index')}]
+    ancestors = []
+    curr = folder.parent
+    while curr:
+        ancestors.append(curr)
+        curr = curr.parent
+
+    for ancestor in reversed(ancestors):
+        crumbs.append({
+            'name': ancestor.name,
+            'url': url_for('gallery.folder_view', folder_id=ancestor.id),
+        })
+
+    type_labels = {
+        'photo': 'Photos',
+        'photos': 'Photos',
+        'video': 'Videos',
+        'videos': 'Videos',
+        'audio': 'Audio',
+        'music': 'Audio',
+    }
+
+    if active_type and active_type in type_labels:
+        crumbs.append({
+            'name': folder.name,
+            'url': url_for('gallery.folder_view', folder_id=folder.id),
+        })
+        crumbs.append({
+            'name': type_labels[active_type],
+            'url': None,
+        })
+    else:
+        crumbs.append({
+            'name': folder.name,
+            'url': None,
+        })
+
+    return crumbs
+
+
+class UnfiledFolder:
+    def __init__(self):
+        self.id = 0
+        self.name = "General Media"
+        self.description = "Direct uploads and unfiled media items"
+        self.parent_id = None
+        self.parent = None
+        self.visibility_status = 'published'
+
+    def get_cover_thumbnail_url(self):
+        item = (Media.query.filter_by(status='published', folder_id=None, deleted_at=None)
+                .order_by(desc(Media.published_at), desc(Media.created_at)).first())
+        if item:
+            return item.thumbnail_path or item.storage_path
+        return None
+
+    @property
+    def published_photos_count(self):
+        return Media.query.filter_by(status='published', folder_id=None, deleted_at=None, media_type='photo').count()
+
+    @property
+    def published_videos_count(self):
+        return Media.query.filter_by(status='published', folder_id=None, deleted_at=None, media_type='video').count()
+
+    @property
+    def published_audio_count(self):
+        return Media.query.filter_by(status='published', folder_id=None, deleted_at=None, media_type='audio').count()
+
+    @property
+    def published_subfolders_count(self):
+        return 0
+
+
 # ---------------------------------------------------------------------------
-# Gallery index
+# Gallery Index — Folder-Based Viewer Home
 # ---------------------------------------------------------------------------
 @gallery_bp.route('/')
 @viewer_required
@@ -31,15 +110,145 @@ def index():
     vs  = g.viewer_session
     cfg = get_settings_dict()
 
+    page     = request.args.get('page', 1, type=int)
+    per_page = int(cfg.get('items_per_page', 24))
+    search   = request.args.get('q', '').strip()
+    tab      = request.args.get('tab', 'folders')
+
+    # If viewer searched for media
+    if search:
+        q = (Media.query
+             .filter_by(status='published')
+             .filter(Media.deleted_at == None))
+        q = q.filter(or_(
+            Media.title.ilike(f'%{search}%'),
+            Media.description.ilike(f'%{search}%'),
+            Media.tags.ilike(f'%{search}%'),
+        ))
+        q = q.order_by(desc(Media.published_at), desc(Media.created_at))
+        pagination = q.paginate(page=page, per_page=per_page, error_out=False)
+        fav_ids  = {f.media_id for f in vs.favourites.all()} if setting_enabled('allow_favourites') else set()
+        like_ids = {l.media_id for l in vs.likes.all()} if setting_enabled('allow_likes') else set()
+        return render_template('gallery/index.html',
+            is_search=True,
+            is_folder_home=False,
+            is_favourites=False,
+            media=pagination.items,
+            pagination=pagination,
+            search=search,
+            tab='search',
+            fav_ids=fav_ids,
+            like_ids=like_ids,
+            cfg=cfg,
+            format_duration=format_duration,
+            viewer_name=vs.display_name,
+        )
+
+    # If viewer clicked favourites tab
+    if tab == 'favourites' and setting_enabled('allow_favourites'):
+        fav_ids_list = [f.media_id for f in vs.favourites.all()]
+        q = (Media.query
+             .filter_by(status='published')
+             .filter(Media.deleted_at == None))
+        q = q.filter(Media.id.in_(fav_ids_list)) if fav_ids_list else q.filter(Media.id == None)
+        q = q.order_by(desc(Media.published_at), desc(Media.created_at))
+        pagination = q.paginate(page=page, per_page=per_page, error_out=False)
+        fav_ids  = set(fav_ids_list)
+        like_ids = {l.media_id for l in vs.likes.all()} if setting_enabled('allow_likes') else set()
+        return render_template('gallery/index.html',
+            is_favourites=True,
+            is_folder_home=False,
+            is_search=False,
+            media=pagination.items,
+            pagination=pagination,
+            search='',
+            tab='favourites',
+            fav_ids=fav_ids,
+            like_ids=like_ids,
+            cfg=cfg,
+            format_duration=format_duration,
+            viewer_name=vs.display_name,
+        )
+
+    # DEFAULT VIEW: FOLDER-BASED GALLERY HOME
+    # Do not display all media automatically!
+    top_folders = (Folder.query
+                   .filter_by(visibility_status='published', parent_id=None)
+                   .order_by(Folder.sort_order, Folder.name).all())
+
+    # Include any orphaned published folders (parent_id is set but parent does not exist or is hidden)
+    all_published = Folder.query.filter_by(visibility_status='published').all()
+    pub_ids = {f.id for f in all_published}
+    orphans = [f for f in all_published if f.parent_id is not None and f.parent_id not in pub_ids]
+    folders = list(top_folders) + orphans
+
+    # If there are any unassigned published media items, include General Media folder
+    unfiled_count = Media.query.filter_by(status='published', folder_id=None).filter(Media.deleted_at == None).count()
+    if unfiled_count > 0:
+        folders.append(UnfiledFolder())
+
+    if page == 1:
+        log_event('gallery_open')
+
+    return render_template('gallery/index.html',
+        folders=folders,
+        is_folder_home=True,
+        is_search=False,
+        is_favourites=False,
+        media=[],
+        search='',
+        tab='folders',
+        cfg=cfg,
+        format_duration=format_duration,
+        viewer_name=vs.display_name,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Folder View — Subfolders & Scoped Media
+# ---------------------------------------------------------------------------
+@gallery_bp.route('/folder/<int:folder_id>')
+@viewer_required
+def folder_view(folder_id):
+    vs  = g.viewer_session
+    cfg = get_settings_dict()
+
+    if folder_id == 0:
+        folder = UnfiledFolder()
+        sub_folders = []
+        q = (Media.query
+             .filter_by(status='published', folder_id=None)
+             .filter(Media.deleted_at == None))
+        base_counts = (Media.query
+                       .filter_by(status='published', folder_id=None)
+                       .filter(Media.deleted_at == None))
+    else:
+        folder = Folder.query.filter_by(id=folder_id, visibility_status='published').first_or_404()
+        sub_folders = (Folder.query
+                       .filter_by(parent_id=folder_id, visibility_status='published')
+                       .order_by(Folder.sort_order, Folder.name).all())
+        q = (Media.query
+             .filter_by(status='published', folder_id=folder_id)
+             .filter(Media.deleted_at == None))
+        base_counts = (Media.query
+                       .filter_by(status='published', folder_id=folder_id)
+                       .filter(Media.deleted_at == None))
+
     page        = request.args.get('page', 1, type=int)
     per_page    = int(cfg.get('items_per_page', 24))
     search      = request.args.get('q', '').strip()
-    filter_type = request.args.get('type', '')
-    filter_folder = request.args.get('folder_id', '', type=str)
-    tab         = request.args.get('tab', 'all')  # all|photos|videos|audio|folders|favourites
+    filter_type = request.args.get('type') or request.args.get('tab', 'all')
+    filter_type = filter_type.strip().lower()
 
-    # Base query: published, not deleted
-    q = Media.query.filter_by(status='published').filter(Media.deleted_at == None)
+    # Subfolders assigned to this folder
+    sub_folders = (Folder.query
+                   .filter_by(parent_id=folder_id, visibility_status='published')
+                   .order_by(Folder.sort_order, Folder.name).all())
+
+    # Media query: strictly filtered by this folder ID!
+    q = (Media.query
+         .filter_by(status='published', folder_id=folder_id)
+         .filter(Media.deleted_at == None))
 
     if search:
         q = q.filter(or_(
@@ -48,78 +257,36 @@ def index():
             Media.tags.ilike(f'%{search}%'),
         ))
 
-    if tab == 'photos':
+    # Media category filters: All, Photos, Videos, Audio
+    if filter_type in ('photos', 'photo'):
         q = q.filter(Media.media_type == 'photo')
-    elif tab == 'videos':
+    elif filter_type in ('videos', 'video'):
         q = q.filter(Media.media_type == 'video')
-    elif tab == 'audio':
+    elif filter_type in ('audio', 'music'):
         q = q.filter(Media.media_type == 'audio')
-    elif tab == 'favourites' and setting_enabled('allow_favourites'):
-        fav_ids = [f.media_id for f in vs.favourites.all()]
-        q = q.filter(Media.id.in_(fav_ids)) if fav_ids else q.filter(Media.id == None)
-
-    if filter_folder.isdigit():
-        folder = Folder.query.filter_by(id=int(filter_folder), visibility_status='published').first()
-        if folder:
-            q = q.filter(Media.folder_id == int(filter_folder))
-            log_event('folder_open', folder_id=int(filter_folder))
+    else:
+        filter_type = 'all'
 
     q = q.order_by(desc(Media.published_at), desc(Media.created_at))
     pagination = q.paginate(page=page, per_page=per_page, error_out=False)
 
-    # Published folders for navigation
-    folders = (Folder.query
-               .filter_by(visibility_status='published')
-               .order_by(Folder.sort_order, Folder.name).all())
-
-    # Favourite IDs for this session
-    fav_ids  = {f.media_id for f in vs.favourites.all()} if setting_enabled('allow_favourites') else set()
-    like_ids = {l.media_id for l in vs.likes.all()} if setting_enabled('allow_likes') else set()
-
-    # Log gallery open (once per page load)
-    if page == 1 and not search and not filter_type:
-        log_event('gallery_open')
-
-    return render_template('gallery/index.html',
-        media=pagination.items, pagination=pagination,
-        folders=folders, search=search, tab=tab,
-        filter_folder=filter_folder,
-        fav_ids=fav_ids, like_ids=like_ids,
-        cfg=cfg,
-        format_duration=format_duration,
-        viewer_name=vs.display_name,
-    )
-
-
-# ---------------------------------------------------------------------------
-# Folder view
-# ---------------------------------------------------------------------------
-@gallery_bp.route('/folder/<int:folder_id>')
-@viewer_required
-def folder_view(folder_id):
-    vs  = g.viewer_session
-    cfg = get_settings_dict()
-    folder = Folder.query.filter_by(id=folder_id, visibility_status='published').first_or_404()
-
-    page       = request.args.get('page', 1, type=int)
-    per_page   = int(cfg.get('items_per_page', 24))
-    search     = request.args.get('q', '').strip()
-
-    q = (Media.query
-         .filter_by(status='published', folder_id=folder_id)
-         .filter(Media.deleted_at == None))
+    # Scoped media counts for the category tabs inside this folder
+    base_counts = (Media.query
+                   .filter_by(status='published', folder_id=folder_id)
+                   .filter(Media.deleted_at == None))
     if search:
-        q = q.filter(or_(
+        base_counts = base_counts.filter(or_(
             Media.title.ilike(f'%{search}%'),
             Media.description.ilike(f'%{search}%'),
+            Media.tags.ilike(f'%{search}%'),
         ))
-    q = q.order_by(desc(Media.published_at))
-    pagination = q.paginate(page=page, per_page=per_page, error_out=False)
+    total_count  = base_counts.count()
+    photos_count = base_counts.filter(Media.media_type == 'photo').count()
+    videos_count = base_counts.filter(Media.media_type == 'video').count()
+    audio_count  = base_counts.filter(Media.media_type == 'audio').count()
 
-    # Subfolder navigation
-    sub_folders = (Folder.query
-                   .filter_by(parent_id=folder_id, visibility_status='published')
-                   .order_by(Folder.sort_order, Folder.name).all())
+    # Breadcrumbs (e.g. Home > Events > College Day > Videos)
+    breadcrumbs = get_folder_breadcrumbs(folder, active_type=filter_type)
 
     fav_ids  = {f.media_id for f in vs.favourites.all()} if setting_enabled('allow_favourites') else set()
     like_ids = {l.media_id for l in vs.likes.all()} if setting_enabled('allow_likes') else set()
@@ -127,17 +294,27 @@ def folder_view(folder_id):
     log_event('folder_open', folder_id=folder_id, meta={'name': folder.name})
 
     return render_template('gallery/folder.html',
-        folder=folder, sub_folders=sub_folders,
-        media=pagination.items, pagination=pagination,
-        search=search, cfg=cfg,
-        fav_ids=fav_ids, like_ids=like_ids,
+        folder=folder,
+        sub_folders=sub_folders,
+        media=pagination.items,
+        pagination=pagination,
+        search=search,
+        filter_type=filter_type,
+        total_count=total_count,
+        photos_count=photos_count,
+        videos_count=videos_count,
+        audio_count=audio_count,
+        breadcrumbs=breadcrumbs,
+        cfg=cfg,
+        fav_ids=fav_ids,
+        like_ids=like_ids,
         format_duration=format_duration,
         viewer_name=vs.display_name,
     )
 
 
 # ---------------------------------------------------------------------------
-# Individual media viewer
+# Individual Media Viewer
 # ---------------------------------------------------------------------------
 @gallery_bp.route('/media/<int:media_id>')
 @viewer_required
