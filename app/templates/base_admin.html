@@ -64,6 +64,10 @@
          class="nav-item {% if request.endpoint == 'admin.settings' %}active{% endif %}">
         <span class="icon">⚙️</span> Settings
       </a>
+      <a href="{{ url_for('admin.about_us') }}"
+         class="nav-item {% if request.endpoint == 'admin.about_us' %}active{% endif %}">
+        <span class="icon">ℹ️</span> About Us
+      </a>
     </nav>
 
     <div class="sidebar-footer">

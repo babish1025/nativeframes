@@ -12,7 +12,8 @@ from sqlalchemy import func, desc, asc, and_, or_
 from werkzeug.utils import secure_filename
 
 from ..models import (db, Admin, Media, Folder, ViewerSession, MediaEvent,
-                      MediaLike, MediaFavourite, AppSetting, AdminAuditLog)
+                      MediaLike, MediaFavourite, AppSetting, AdminAuditLog,
+                      AboutItem)
 from ..utils  import (admin_required, save_upload, delete_file_safe,
                       generate_image_thumbnail, audit_log, utcnow,
                       human_filesize, format_duration, get_settings_dict,
@@ -775,3 +776,58 @@ def empty_trash():
     audit_log('empty_trash', 'media', details=f'{len(deleted_media)} items permanently deleted')
     flash(f'Trash emptied. {len(deleted_media)} items permanently deleted.', 'success')
     return redirect(url_for('admin.trash'))
+
+
+# ---------------------------------------------------------------------------
+# About Us — CRUD
+# ---------------------------------------------------------------------------
+@admin_bp.route('/about', methods=['GET'])
+@admin_required
+def about_us():
+    items = AboutItem.query.order_by(AboutItem.sort_order, AboutItem.id).all()
+    return render_template('admin/about_us.html', items=items)
+
+
+@admin_bp.route('/about/add', methods=['POST'])
+@admin_required
+def about_us_add():
+    emoji   = request.form.get('emoji', '').strip() or 'ℹ️'
+    title   = request.form.get('title', '').strip()
+    content = request.form.get('content', '').strip()
+    sort_order = int(request.form.get('sort_order', 0) or 0)
+    if not title or not content:
+        flash('Title and content are required.', 'error')
+        return redirect(url_for('admin.about_us'))
+    item = AboutItem(emoji=emoji, title=title, content=content, sort_order=sort_order)
+    db.session.add(item)
+    db.session.commit()
+    audit_log('add_about_item', 'about', item.id, title)
+    flash(f'About item "{title}" added.', 'success')
+    return redirect(url_for('admin.about_us'))
+
+
+@admin_bp.route('/about/<int:item_id>/edit', methods=['POST'])
+@admin_required
+def about_us_edit(item_id):
+    item = AboutItem.query.get_or_404(item_id)
+    item.emoji      = request.form.get('emoji', '').strip() or item.emoji
+    item.title      = request.form.get('title', '').strip() or item.title
+    item.content    = request.form.get('content', '').strip() or item.content
+    item.sort_order = int(request.form.get('sort_order', item.sort_order) or item.sort_order)
+    item.is_active  = bool(request.form.get('is_active'))
+    db.session.commit()
+    audit_log('edit_about_item', 'about', item.id, item.title)
+    flash(f'About item "{item.title}" updated.', 'success')
+    return redirect(url_for('admin.about_us'))
+
+
+@admin_bp.route('/about/<int:item_id>/delete', methods=['POST'])
+@admin_required
+def about_us_delete(item_id):
+    item = AboutItem.query.get_or_404(item_id)
+    title = item.title
+    db.session.delete(item)
+    db.session.commit()
+    audit_log('delete_about_item', 'about', item_id, title)
+    flash(f'About item "{title}" deleted.', 'success')
+    return redirect(url_for('admin.about_us'))

@@ -1,0 +1,205 @@
+{% extends "base_admin.html" %}
+
+{% block title %}About Us Manager — NativeFrames Admin Studio{% endblock %}
+{% block breadcrumb %}About Us{% endblock %}
+
+{% block content %}
+<div style="max-width:860px; margin:0 auto; display:flex; flex-direction:column; gap:2rem;">
+
+  <!-- Header -->
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <h1 style="font-size:1.75rem; font-weight:700; color:#fff; margin:0 0 0.25rem;">
+        About Us Manager
+      </h1>
+      <p style="color:var(--nf-text-dim); font-size:0.875rem; margin:0;">
+        Manage the studio information displayed in the gallery's <strong style="color:var(--nf-gold);">ℹ️ About</strong> panel. Each topic shows as an info row with emoji, title, and content.
+      </p>
+    </div>
+    <button onclick="document.getElementById('add-form-card').scrollIntoView({behavior:'smooth'})"
+            class="btn btn-primary" style="white-space:nowrap;">+ Add Topic</button>
+  </div>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div style="padding:0.75rem 1.1rem; border-radius:8px; font-size:0.9rem; font-weight:500;
+                  background:{% if cat=='success' %}rgba(52,211,153,0.12){% else %}rgba(248,113,113,0.12){% endif %};
+                  border:1px solid {% if cat=='success' %}rgba(52,211,153,0.3){% else %}rgba(248,113,113,0.3){% endif %};
+                  color:{% if cat=='success' %}#34d399{% else %}#f87171{% endif %};">
+        {{ msg }}
+      </div>
+    {% endfor %}
+  {% endwith %}
+
+  <!-- Existing Items -->
+  {% if items %}
+  <div style="display:flex; flex-direction:column; gap:1rem;">
+    <h3 style="font-size:1rem; font-weight:700; color:#fff; margin:0; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:0.6rem;">
+      Current About Topics
+      <span style="font-size:0.78rem; font-weight:400; color:var(--nf-text-dim); margin-left:0.5rem;">({{ items|length }} item{{ 's' if items|length != 1 else '' }})</span>
+    </h3>
+
+    {% for item in items %}
+    <div id="about-card-{{ item.id }}"
+         style="background:#121215; border:1px solid {% if item.is_active %}rgba(212,175,55,0.2){% else %}rgba(255,255,255,0.06){% endif %};
+                border-radius:14px; overflow:hidden;">
+
+      <!-- Card Header -->
+      <div style="display:flex; align-items:center; gap:0.85rem; padding:1.1rem 1.25rem;
+                  border-bottom:1px solid rgba(255,255,255,0.05); background:rgba(255,255,255,0.02);">
+        <span style="font-size:1.8rem; line-height:1; flex-shrink:0; min-width:36px; text-align:center;">{{ item.emoji }}</span>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:1rem; font-weight:700; color:#fff;">{{ item.title }}</div>
+          <div style="font-size:0.75rem; color:var(--nf-text-dim); margin-top:0.1rem;">
+            Order: {{ item.sort_order }} &nbsp;·&nbsp;
+            <span style="color:{% if item.is_active %}#34d399{% else %}#f87171{% endif %}; font-weight:600;">
+              {% if item.is_active %}Visible{% else %}Hidden{% endif %}
+            </span>
+          </div>
+        </div>
+        <div style="display:flex; gap:0.5rem; flex-shrink:0;">
+          <button onclick="toggleEdit({{ item.id }})" class="btn btn-ghost btn-sm"
+                  style="border:1px solid rgba(212,175,55,0.3); color:var(--nf-gold);">✏️ Edit</button>
+          <form method="POST" action="{{ url_for('admin.about_us_delete', item_id=item.id) }}"
+                onsubmit="return confirm('Delete this About topic?');" style="margin:0;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="btn btn-ghost btn-sm"
+                    style="border:1px solid rgba(248,113,113,0.3); color:#f87171;">🗑️</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Content Preview -->
+      <div style="padding:0.85rem 1.25rem; font-size:0.88rem; color:var(--nf-text-dim); line-height:1.5;">
+        {{ item.content }}
+      </div>
+
+      <!-- Inline Edit Form -->
+      <div id="edit-form-{{ item.id }}" style="display:none; border-top:1px solid rgba(255,255,255,0.06);">
+        <form method="POST" action="{{ url_for('admin.about_us_edit', item_id=item.id) }}"
+              style="padding:1.25rem; display:flex; flex-direction:column; gap:1rem; background:#0d0e12;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <div style="display:grid; grid-template-columns:80px 1fr 100px; gap:0.75rem;">
+            <div>
+              <label style="display:block; font-size:0.8rem; color:var(--nf-text-dim); margin-bottom:0.35rem;">Emoji</label>
+              <input type="text" name="emoji" value="{{ item.emoji }}" maxlength="5"
+                     style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+                            color:#fff; border-radius:8px; padding:0.6rem; font-size:1.2rem; text-align:center;" />
+            </div>
+            <div>
+              <label style="display:block; font-size:0.8rem; color:var(--nf-text-dim); margin-bottom:0.35rem;">Topic Title</label>
+              <input type="text" name="title" value="{{ item.title }}" required
+                     style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+                            color:#fff; border-radius:8px; padding:0.6rem 0.9rem;" />
+            </div>
+            <div>
+              <label style="display:block; font-size:0.8rem; color:var(--nf-text-dim); margin-bottom:0.35rem;">Order</label>
+              <input type="number" name="sort_order" value="{{ item.sort_order }}" min="0"
+                     style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+                            color:#fff; border-radius:8px; padding:0.6rem;" />
+            </div>
+          </div>
+          <div>
+            <label style="display:block; font-size:0.8rem; color:var(--nf-text-dim); margin-bottom:0.35rem;">Content</label>
+            <textarea name="content" rows="3" required
+                      style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+                             color:#fff; border-radius:8px; padding:0.75rem; resize:vertical; font-size:0.9rem; font-family:inherit;">{{ item.content }}</textarea>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.88rem; color:#fff;">
+              <input type="checkbox" name="is_active" value="1" {% if item.is_active %}checked{% endif %}
+                     style="width:16px; height:16px; accent-color:var(--nf-gold);" />
+              Show in gallery
+            </label>
+            <div style="display:flex; gap:0.75rem;">
+              <button type="button" onclick="toggleEdit({{ item.id }})" class="btn btn-ghost btn-sm">Cancel</button>
+              <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div style="text-align:center; padding:4rem 1.5rem; background:#121215; border:1px solid rgba(255,255,255,0.06); border-radius:14px;">
+    <div style="font-size:3rem; margin-bottom:1rem; opacity:0.5;">ℹ️</div>
+    <h3 style="color:#fff; font-weight:600; margin-bottom:0.5rem;">No About topics yet</h3>
+    <p style="color:var(--nf-text-dim); font-size:0.875rem;">Add your first topic below — it will appear in the gallery's About panel.</p>
+  </div>
+  {% endif %}
+
+  <!-- Add New Item Form -->
+  <div id="add-form-card" style="padding:1.75rem; background:#121215; border:1px solid rgba(212,175,55,0.18); border-radius:14px;">
+    <h3 style="font-size:1.05rem; font-weight:700; color:#fff; margin:0 0 1.25rem; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:0.75rem;">
+      ✨ Add New About Topic
+    </h3>
+    <form method="POST" action="{{ url_for('admin.about_us_add') }}"
+          style="display:flex; flex-direction:column; gap:1.1rem;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <div style="display:grid; grid-template-columns:80px 1fr 100px; gap:0.75rem;">
+        <div>
+          <label for="new-emoji" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">Emoji</label>
+          <input type="text" name="emoji" id="new-emoji" maxlength="5" placeholder="📸"
+                 style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+                        color:#fff; border-radius:8px; padding:0.7rem; font-size:1.3rem; text-align:center;" />
+        </div>
+        <div>
+          <label for="new-title" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">
+            Topic Title <span style="color:#f87171;">*</span>
+          </label>
+          <input type="text" name="title" id="new-title" required placeholder="e.g. Phone, Email, Location…"
+                 style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+                        color:#fff; border-radius:8px; padding:0.7rem 1rem;" />
+        </div>
+        <div>
+          <label for="new-sort" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">Order</label>
+          <input type="number" name="sort_order" id="new-sort" value="{{ items|length }}" min="0"
+                 style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+                        color:#fff; border-radius:8px; padding:0.7rem;" />
+        </div>
+      </div>
+      <div>
+        <label for="new-content" style="display:block; font-size:0.85rem; color:#fff; margin-bottom:0.4rem; font-weight:600;">
+          Content <span style="color:#f87171;">*</span>
+        </label>
+        <textarea name="content" id="new-content" rows="3" required
+                  placeholder="e.g. +91 98765 43210  /  contact@nativeframes.in  /  Mon–Sat 9AM–7PM…"
+                  style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+                         color:#fff; border-radius:8px; padding:0.85rem; resize:vertical; font-size:0.9rem; font-family:inherit;"></textarea>
+        <div style="font-size:0.75rem; color:var(--nf-text-dim); margin-top:0.35rem;">
+          Tip: For phone/email, enter them as plain text. They'll appear verbatim in the gallery About panel.
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end;">
+        <button type="submit" class="btn btn-primary" style="padding:0.75rem 2.5rem;">Add Topic</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Hint -->
+  <div style="background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.18); border-radius:12px;
+              padding:1rem 1.25rem; font-size:0.85rem; color:var(--nf-text-dim); display:flex; gap:0.75rem; align-items:flex-start;">
+    <span style="font-size:1.1rem; flex-shrink:0;">💡</span>
+    <span>
+      Topics marked <strong style="color:#fff;">Visible</strong> appear in the gallery's <strong style="color:var(--nf-gold);">ℹ️ About</strong> modal
+      ordered by the <em>Order</em> value (lower = first). Hidden topics are preserved but not shown to viewers.
+    </span>
+  </div>
+
+</div>
+
+<script>
+  function toggleEdit(id) {
+    var el = document.getElementById('edit-form-' + id);
+    document.querySelectorAll('[id^="edit-form-"]').forEach(function(e) {
+      if (e.id !== 'edit-form-' + id) e.style.display = 'none';
+    });
+    el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+    if (el.style.display === 'block') el.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+</script>
+{% endblock %}

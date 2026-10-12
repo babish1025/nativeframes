@@ -93,73 +93,40 @@
 
     <div class="about-modal-body">
 
-      <div class="about-info-row">
-        <div class="about-info-icon">📸</div>
-        <div>
-          <div class="about-info-label">About Us</div>
-          <div class="about-info-value">
-            Native Frames is a professional studio gallery capturing life's most cherished moments — portraits, events, cinematic reels, and everything in between.
+      {% if about_items %}
+        {% for item in about_items %}
+        <div class="about-info-row">
+          <div class="about-info-icon">{{ item.emoji }}</div>
+          <div>
+            <div class="about-info-label">{{ item.title }}</div>
+            <div class="about-info-value">{{ item.content }}</div>
           </div>
         </div>
-      </div>
-
-      <div class="about-divider"></div>
-
-      <div class="about-info-row">
-        <div class="about-info-icon">📞</div>
-        <div>
-          <div class="about-info-label">Phone</div>
-          <div class="about-info-value">
-            <a href="tel:+919876543210">+91 98765 43210</a>
+        {% endfor %}
+      {% else %}
+        <!-- Fallback if admin hasn't added any items yet -->
+        <div class="about-info-row">
+          <div class="about-info-icon">📸</div>
+          <div>
+            <div class="about-info-label">About Us</div>
+            <div class="about-info-value">Native Frames is a professional studio gallery capturing life's most cherished moments.</div>
           </div>
         </div>
-      </div>
-
-      <div class="about-info-row">
-        <div class="about-info-icon">📧</div>
-        <div>
-          <div class="about-info-label">Email</div>
-          <div class="about-info-value">
-            <a href="mailto:contact@nativeframes.in">contact@nativeframes.in</a>
+        <div class="about-info-row">
+          <div class="about-info-icon">📞</div>
+          <div>
+            <div class="about-info-label">Phone</div>
+            <div class="about-info-value"><a href="tel:+919876543210">+91 98765 43210</a></div>
           </div>
         </div>
-      </div>
-
-      <div class="about-info-row">
-        <div class="about-info-icon">📍</div>
-        <div>
-          <div class="about-info-label">Studio Location</div>
-          <div class="about-info-value">Native Frames Studio, Chennai, Tamil Nadu, India</div>
-        </div>
-      </div>
-
-      <div class="about-info-row">
-        <div class="about-info-icon">🕐</div>
-        <div>
-          <div class="about-info-label">Working Hours</div>
-          <div class="about-info-value">Mon – Sat &nbsp;|&nbsp; 9:00 AM – 7:00 PM</div>
-        </div>
-      </div>
-
-      <div class="about-info-row">
-        <div class="about-info-icon">📱</div>
-        <div>
-          <div class="about-info-label">Instagram</div>
-          <div class="about-info-value">
-            <a href="https://instagram.com/nativeframes" target="_blank" rel="noopener">@nativeframes</a>
+        <div class="about-info-row">
+          <div class="about-info-icon">📧</div>
+          <div>
+            <div class="about-info-label">Email</div>
+            <div class="about-info-value"><a href="mailto:contact@nativeframes.in">contact@nativeframes.in</a></div>
           </div>
         </div>
-      </div>
-
-      <div class="about-info-row">
-        <div class="about-info-icon">🌐</div>
-        <div>
-          <div class="about-info-label">Website</div>
-          <div class="about-info-value">
-            <a href="https://nativeframes.vercel.app" target="_blank" rel="noopener">nativeframes.vercel.app</a>
-          </div>
-        </div>
-      </div>
+      {% endif %}
 
     </div>
   </div>

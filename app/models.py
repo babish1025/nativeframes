@@ -315,3 +315,23 @@ class AdminAuditLog(BaseModel):
 
     def __repr__(self):
         return f'<AdminAuditLog {self.action} @ {self.created_at}>'
+
+
+# ---------------------------------------------------------------------------
+# About Us Items
+# ---------------------------------------------------------------------------
+class AboutItem(BaseModel):
+    __tablename__ = 'about_items'
+
+    id         = db.Column(db.Integer, primary_key=True)
+    emoji      = db.Column(db.String(10), nullable=False, default='ℹ️')
+    title      = db.Column(db.String(150), nullable=False)
+    content    = db.Column(db.Text, nullable=False)
+    sort_order = db.Column(db.Integer, nullable=False, default=0)
+    is_active  = db.Column(db.Boolean, nullable=False, default=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=utcnow, onupdate=utcnow)
+
+    def __repr__(self):
+        return f'<AboutItem {self.title}>'
+

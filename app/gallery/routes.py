@@ -8,12 +8,20 @@ from flask import (Blueprint, render_template, request, redirect,
 from sqlalchemy import desc, or_
 
 from ..models import (db, Media, Folder, ViewerSession, MediaEvent,
-                      MediaLike, MediaFavourite)
+                      MediaLike, MediaFavourite, AboutItem)
 from ..utils  import (viewer_required, log_event, utcnow,
                       format_duration, get_setting, setting_enabled,
                       get_settings_dict)
 
 gallery_bp = Blueprint('gallery', __name__)
+
+
+def _get_about_items():
+    """Return active About Us items ordered by sort_order."""
+    try:
+        return AboutItem.query.filter_by(is_active=True).order_by(AboutItem.sort_order, AboutItem.id).all()
+    except Exception:
+        return []
 
 
 def _get_viewer_session():
@@ -142,6 +150,7 @@ def index():
             cfg=cfg,
             format_duration=format_duration,
             viewer_name=vs.display_name,
+            about_items=_get_about_items(),
         )
 
     # If viewer clicked favourites tab
@@ -168,6 +177,7 @@ def index():
             cfg=cfg,
             format_duration=format_duration,
             viewer_name=vs.display_name,
+            about_items=_get_about_items(),
         )
 
     # DEFAULT VIEW: FOLDER-BASED GALLERY HOME
@@ -201,6 +211,7 @@ def index():
         cfg=cfg,
         format_duration=format_duration,
         viewer_name=vs.display_name,
+        about_items=_get_about_items(),
     )
 
 
@@ -310,6 +321,7 @@ def folder_view(folder_id):
         like_ids=like_ids,
         format_duration=format_duration,
         viewer_name=vs.display_name,
+        about_items=_get_about_items(),
     )
 
 
@@ -356,4 +368,5 @@ def media_view(media_id):
         fav_ids=fav_ids, like_ids=like_ids,
         format_duration=format_duration,
         viewer_name=vs.display_name,
+        about_items=_get_about_items(),
     )
