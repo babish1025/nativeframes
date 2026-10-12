@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,90 +11,95 @@
   <link rel="icon" href="{{ url_for('static', filename='images/nativeframes-logo.jpg') }}" type="image/jpeg" />
   {% block head %}{% endblock %}
 </head>
+
 <body>
 
-<!-- ===================== GALLERY TOPBAR ===================== -->
-<header class="gallery-topbar">
-  <div class="gallery-topbar-inner">
-    <a class="gallery-logo" href="{{ url_for('gallery.index') }}" aria-label="NativeFrames Home">
-      <img src="{{ url_for('static', filename='images/nativeframes-logo.jpg') }}" alt="NativeFrames" />
-    </a>
-
-    <div class="gallery-welcome">
-      Welcome, <span>{{ viewer_name }}</span>
-    </div>
-
-    <form id="gallery-search-form" method="GET" action="{{ url_for('gallery.index') }}" class="gallery-search-wrap">
-      <span class="gallery-search-icon">🔍</span>
-      <input id="gallery-search-input" class="gallery-search" type="search"
-             name="q" value="{{ request.args.get('q','') }}"
-             placeholder="Search media…" autocomplete="off" />
-    </form>
-
-    <div class="gallery-tabs">
-      <a href="{{ url_for('gallery.index') }}" class="gallery-tab {% if tab != 'favourites' and not search %}active{% endif %}">
-        📁 Folders
+  <!-- ===================== GALLERY TOPBAR ===================== -->
+  <header class="gallery-topbar">
+    <div class="gallery-topbar-inner">
+      <a class="gallery-logo" href="{{ url_for('gallery.index') }}" aria-label="NativeFrames Home">
+        <img src="{{ url_for('static', filename='images/nativeframes-logo.jpg') }}" alt="NativeFrames" />
       </a>
-      {% if cfg.get('allow_favourites','1') == '1' %}
-      <a href="{{ url_for('gallery.index', tab='favourites') }}" class="gallery-tab {% if tab == 'favourites' %}active{% endif %}">
-        ★ Favourites
-      </a>
-      {% endif %}
-      <button id="about-tab-btn" class="gallery-tab" onclick="openAboutModal()" style="background:none;border:none;cursor:pointer;">
-        ℹ️ About
-      </button>
-    </div>
 
-    <a href="{{ url_for('auth.viewer_logout') }}" class="btn btn-ghost btn-sm" style="white-space:nowrap">
-      Exit
-    </a>
-  </div>
-</header>
-<!-- ===================== /GALLERY TOPBAR ===================== -->
-
-<main style="min-height:calc(100vh - 70px); padding-bottom: 80px;">
-  {% block content %}{% endblock %}
-</main>
-
-<!-- ===================== MINI AUDIO PLAYER ===================== -->
-<div class="mini-player" id="mini-player">
-  <img class="mini-player-thumb" id="mini-player-thumb" src="" alt="" style="display:none;" />
-  <div class="mini-player-info">
-    <div class="mini-player-title">—</div>
-    <div class="mini-player-artist"></div>
-  </div>
-  <div class="mini-player-controls">
-    <button class="mini-player-btn play-pause" aria-label="Play/Pause">▶</button>
-  </div>
-  <div class="mini-player-progress">
-    <span class="player-time current-time">0:00</span>
-    <input class="player-seek" type="range" min="0" max="100" value="0" aria-label="Seek" />
-    <span class="player-time total-time">0:00</span>
-  </div>
-  <button class="mini-player-btn mini-player-close" aria-label="Close player">✕</button>
-  <audio id="mini-audio" preload="none"></audio>
-</div>
-<!-- ===================== /MINI AUDIO PLAYER ===================== -->
-
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
-{% block scripts %}{% endblock %}
-
-<!-- ===================== ABOUT MODAL ===================== -->
-<div class="about-modal-overlay" id="about-modal-overlay" role="dialog" aria-modal="true" aria-label="About Native Frames">
-  <div class="about-modal about-modal-wrapper">
-    <button class="about-close-btn" onclick="closeAboutModal()" aria-label="Close">✕</button>
-
-    <div class="about-modal-header">
-      <img class="about-modal-logo" src="{{ url_for('static', filename='images/nativeframes-logo.jpg') }}" alt="Native Frames Logo" />
-      <div class="about-modal-brand">
-        <h2>Native Frames</h2>
-        <p>Studio Gallery</p>
+      <div class="gallery-welcome">
+        Welcome, <span>{{ viewer_name }}</span>
       </div>
+
+      <form id="gallery-search-form" method="GET" action="{{ url_for('gallery.index') }}" class="gallery-search-wrap">
+        <span class="gallery-search-icon">🔍</span>
+        <input id="gallery-search-input" class="gallery-search" type="search" name="q"
+          value="{{ request.args.get('q','') }}" placeholder="Search media…" autocomplete="off" />
+      </form>
+
+      <div class="gallery-tabs">
+        <a href="{{ url_for('gallery.index') }}"
+          class="gallery-tab {% if tab != 'favourites' and not search %}active{% endif %}">
+          📁 Folders
+        </a>
+        {% if cfg.get('allow_favourites','1') == '1' %}
+        <a href="{{ url_for('gallery.index', tab='favourites') }}"
+          class="gallery-tab {% if tab == 'favourites' %}active{% endif %}">
+          ★ Favourites
+        </a>
+        {% endif %}
+        <button id="about-tab-btn" class="gallery-tab" onclick="openAboutModal()"
+          style="background:none;border:none;cursor:pointer;">
+          ℹ️ About
+        </button>
+      </div>
+
+      <a href="{{ url_for('auth.viewer_logout') }}" class="btn btn-ghost btn-sm" style="white-space:nowrap">
+        Exit
+      </a>
     </div>
+  </header>
+  <!-- ===================== /GALLERY TOPBAR ===================== -->
 
-    <div class="about-modal-body">
+  <main style="min-height:calc(100vh - 70px); padding-bottom: 80px;">
+    {% block content %}{% endblock %}
+  </main>
 
-      {% if about_items %}
+  <!-- ===================== MINI AUDIO PLAYER ===================== -->
+  <div class="mini-player" id="mini-player">
+    <img class="mini-player-thumb" id="mini-player-thumb" src="" alt="" style="display:none;" />
+    <div class="mini-player-info">
+      <div class="mini-player-title">—</div>
+      <div class="mini-player-artist"></div>
+    </div>
+    <div class="mini-player-controls">
+      <button class="mini-player-btn play-pause" aria-label="Play/Pause">▶</button>
+    </div>
+    <div class="mini-player-progress">
+      <span class="player-time current-time">0:00</span>
+      <input class="player-seek" type="range" min="0" max="100" value="0" aria-label="Seek" />
+      <span class="player-time total-time">0:00</span>
+    </div>
+    <button class="mini-player-btn mini-player-close" aria-label="Close player">✕</button>
+    <audio id="mini-audio" preload="none"></audio>
+  </div>
+  <!-- ===================== /MINI AUDIO PLAYER ===================== -->
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block scripts %}{% endblock %}
+
+  <!-- ===================== ABOUT MODAL ===================== -->
+  <div class="about-modal-overlay" id="about-modal-overlay" role="dialog" aria-modal="true"
+    aria-label="About Native Frames">
+    <div class="about-modal about-modal-wrapper">
+      <button class="about-close-btn" onclick="closeAboutModal()" aria-label="Close">✕</button>
+
+      <div class="about-modal-header">
+        <img class="about-modal-logo" src="{{ url_for('static', filename='images/nativeframes-logo.jpg') }}"
+          alt="Native Frames Logo" />
+        <div class="about-modal-brand">
+          <h2>Native Frames</h2>
+          <p>Studio Gallery</p>
+        </div>
+      </div>
+
+      <div class="about-modal-body">
+
+        {% if about_items %}
         {% for item in about_items %}
         <div class="about-info-row">
           <div class="about-info-icon">{{ item.emoji }}</div>
@@ -103,13 +109,14 @@
           </div>
         </div>
         {% endfor %}
-      {% else %}
+        {% else %}
         <!-- Fallback if admin hasn't added any items yet -->
         <div class="about-info-row">
           <div class="about-info-icon">📸</div>
           <div>
             <div class="about-info-label">About Us</div>
-            <div class="about-info-value">Native Frames is a professional studio gallery capturing life's most cherished moments.</div>
+            <div class="about-info-value">Native Frames is a professional studio gallery capturing life's most cherished
+              moments.</div>
           </div>
         </div>
         <div class="about-info-row">
@@ -126,29 +133,30 @@
             <div class="about-info-value"><a href="mailto:contact@nativeframes.in">contact@nativeframes.in</a></div>
           </div>
         </div>
-      {% endif %}
+        {% endif %}
 
+      </div>
     </div>
   </div>
-</div>
-<!-- ===================== /ABOUT MODAL ===================== -->
+  <!-- ===================== /ABOUT MODAL ===================== -->
 
-<script>
-  function openAboutModal() {
-    document.getElementById('about-modal-overlay').classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeAboutModal() {
-    document.getElementById('about-modal-overlay').classList.remove('open');
-    document.body.style.overflow = '';
-  }
-  document.getElementById('about-modal-overlay').addEventListener('click', function(e) {
-    if (e.target === this) closeAboutModal();
-  });
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeAboutModal();
-  });
-</script>
+  <script>
+    function openAboutModal() {
+      document.getElementById('about-modal-overlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeAboutModal() {
+      document.getElementById('about-modal-overlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    document.getElementById('about-modal-overlay').addEventListener('click', function (e) {
+      if (e.target === this) closeAboutModal();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeAboutModal();
+    });
+  </script>
 
 </body>
+
 </html>
