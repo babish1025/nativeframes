@@ -236,13 +236,14 @@ def utcnow():
 
 
 def human_filesize(size_bytes: int) -> str:
-    if not size_bytes:
+    if size_bytes is None:
         return '—'
-    for unit in ('B', 'KB', 'MB', 'GB'):
-        if size_bytes < 1024.0:
-            return f'{size_bytes:.1f} {unit}'
-        size_bytes /= 1024.0
-    return f'{size_bytes:.1f} TB'
+    size = float(size_bytes)
+    for unit in ('B', 'KB', 'MB', 'GB', 'TB'):
+        if size < 1024.0:
+            return f'{size:.1f} {unit}'
+        size /= 1024.0
+    return f'{size:.1f} PB'
 
 
 def format_duration(seconds: float | None) -> str:

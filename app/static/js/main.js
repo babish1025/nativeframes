@@ -4,6 +4,53 @@
  */
 
 /* ============================================================
+   Device Auto-Detection (Android vs Windows)
+   Runs instantly across all pages so UI adapts seamlessly
+   ============================================================ */
+(function initDeviceDetection() {
+  function detect() {
+    const ua = navigator.userAgent || '';
+    if (/Android/i.test(ua)) return 'android';
+    if (/Windows NT/i.test(ua)) return 'windows';
+    if (/iPhone|iPad|iPod/i.test(ua)) return 'android';
+    if (/Macintosh|Mac OS X|CrOS/i.test(ua)) return 'windows';
+    if (/Linux/i.test(ua) && !/Mobile/i.test(ua)) return 'windows';
+    if (/Mobile|Tablet/i.test(ua)) return 'android';
+    return 'unknown';
+  }
+
+  let device = null;
+  try {
+    device = sessionStorage.getItem('nf_device');
+  } catch (e) {}
+
+  if (!device || device === 'unknown') {
+    device = detect();
+    try {
+      sessionStorage.setItem('nf_device', device);
+      sessionStorage.setItem('nf_layout', device === 'android' ? 'mobile' : 'desktop');
+    } catch (e) {}
+  }
+
+  if (device && device !== 'unknown') {
+    document.documentElement.classList.add('nf-' + device);
+    const applyBody = () => {
+      document.body.classList.add('nf-' + device);
+      if (device === 'android') {
+        const mv = document.querySelector('meta[name="viewport"]');
+        if (mv) mv.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+      }
+    };
+    if (document.body) {
+      applyBody();
+    } else {
+      document.addEventListener('DOMContentLoaded', applyBody);
+    }
+  }
+})();
+
+
+/* ============================================================
    CSRF Token helper (Flask-WTF)
    ============================================================ */
 function getCsrfToken() {
@@ -638,10 +685,44 @@ function initLazyLoad() {
 }
 
 /* ============================================================
+   Admin Profile Dropdown
+   ============================================================ */
+function initAdminProfileDropdown() {
+  const dropdown = document.getElementById('admin-profile-dropdown');
+  const btn = document.getElementById('admin-avatar-btn');
+  if (!dropdown || !btn) return;
+
+  // If already wired via onclick/toggleAdminProfileMenu, avoid double binding
+  if (btn.hasAttribute('onclick')) return;
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = dropdown.classList.toggle('open');
+    btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!dropdown.contains(e.target)) {
+      dropdown.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && dropdown.classList.contains('open')) {
+      dropdown.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+      btn.focus();
+    }
+  });
+}
+
+/* ============================================================
    Init on DOM ready
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   initSidebar();
+  initAdminProfileDropdown();
   initGalleryCards();
   initInteractions();
   initUploadZone();
@@ -664,3 +745,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }, 4000);
 });
+

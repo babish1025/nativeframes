@@ -264,15 +264,141 @@ h4 { font-size: 1.05rem; }
 .topbar-breadcrumb span { color: var(--nf-text); font-weight: 500; }
 
 .topbar-actions { display: flex; align-items: center; gap: .8rem; }
+
+/* Admin Profile Dropdown */
+.admin-profile-dropdown {
+  position: relative;
+  display: inline-flex;
+}
+
 .admin-avatar {
-  width: 34px; height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--nf-gold), #8B6914);
-  display: flex; align-items: center; justify-content: center;
-  font-size: .8rem; font-weight: 700; color: var(--nf-black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--nf-black);
   cursor: pointer;
   border: 2px solid var(--nf-gold-border);
+  outline: none;
+  padding: 0;
+  transition: transform var(--nf-t-fast), box-shadow var(--nf-t-fast), border-color var(--nf-t-fast);
 }
+
+.admin-avatar:hover,
+.admin-profile-dropdown.open .admin-avatar {
+  transform: scale(1.06);
+  border-color: var(--nf-gold);
+  box-shadow: 0 0 14px rgba(212, 175, 55, 0.45);
+}
+
+.admin-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 220px;
+  background: rgba(20, 22, 28, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--nf-border-gold);
+  border-radius: var(--nf-r-md);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(212, 175, 55, 0.12);
+  padding: 0.5rem 0;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px) scale(0.97);
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              visibility 0.2s;
+  pointer-events: none;
+}
+
+.admin-profile-dropdown.open .admin-dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.admin-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+}
+
+.admin-dropdown-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--nf-gold), #8B6914);
+  color: var(--nf-black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.admin-dropdown-info {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.admin-dropdown-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--nf-text);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.admin-dropdown-role {
+  font-size: 0.72rem;
+  color: var(--nf-gold);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-dropdown-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 0.4rem 0;
+}
+
+.admin-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 1rem;
+  color: var(--nf-text);
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: background var(--nf-t-fast), color var(--nf-t-fast);
+}
+
+.admin-dropdown-item:hover {
+  background: rgba(212, 175, 55, 0.12);
+  color: var(--nf-gold);
+}
+
+.admin-dropdown-item.logout-item {
+  color: #ff6b6b;
+}
+
+.admin-dropdown-item.logout-item:hover {
+  background: rgba(244, 67, 54, 0.12);
+  color: #ff8585;
+}
+
 
 .admin-content {
   flex: 1;
@@ -2195,4 +2321,100 @@ select.form-control { cursor: pointer; }
   .about-modal-brand h2 { font-size: 1.15rem; }
   .about-modal-logo { width: 52px; height: 52px; }
 }
+
+/* ============================================================
+   Device Adaptive Enhancements (Android vs Windows)
+   ============================================================ */
+
+/* --- Android / Mobile specific adaptations --- */
+.nf-android,
+body.nf-android {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+body.nf-android .btn {
+  min-height: 44px;
+}
+
+body.nf-android .gallery-topbar {
+  padding: 0.5rem 0.75rem;
+}
+
+body.nf-android .gallery-tabs {
+  gap: 0.35rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.nf-android .gallery-tab {
+  padding: 0.55rem 0.9rem;
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+
+body.nf-android .lightbox-btn {
+  width: 48px;
+  height: 48px;
+  font-size: 1.3rem;
+}
+
+body.nf-android .mini-player {
+  bottom: 0.5rem;
+  left: 0.5rem;
+  right: 0.5rem;
+  width: auto;
+  max-width: none;
+}
+
+/* --- Windows / Desktop specific adaptations --- */
+.nf-windows {
+  scrollbar-width: thin;
+  scrollbar-color: var(--nf-gold) var(--nf-graphite-3);
+}
+
+body.nf-windows::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+body.nf-windows::-webkit-scrollbar-track {
+  background: #111114;
+}
+
+body.nf-windows::-webkit-scrollbar-thumb {
+  background: var(--nf-graphite);
+  border-radius: 4px;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+body.nf-windows::-webkit-scrollbar-thumb:hover {
+  background: var(--nf-gold);
+}
+
+body.nf-windows .media-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.65), 0 0 15px rgba(212, 175, 55, 0.2);
+}
+
+/* ============================================================
+   Password Reveal Eye Icon (Edge / Windows native ::-ms-reveal)
+   Styled with cinematic NativeFrames gold glow
+   ============================================================ */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  filter: brightness(0) saturate(100%) invert(74%) sepia(43%) saturate(1024%) hue-rotate(5deg) brightness(91%) contrast(89%) drop-shadow(0 0 7px rgba(212, 175, 55, 0.95)) !important;
+  cursor: pointer;
+  opacity: 0.9;
+  transition: filter 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+}
+
+input[type="password"]::-ms-reveal:hover,
+input[type="password"]::-ms-clear:hover {
+  filter: brightness(0) saturate(100%) invert(85%) sepia(60%) saturate(1500%) hue-rotate(8deg) brightness(120%) contrast(95%) drop-shadow(0 0 12px rgba(255, 183, 3, 1)) !important;
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+
 

@@ -167,13 +167,14 @@ class Media(BaseModel):
 
     @property
     def file_size_human(self):
-        if not self.file_size:
+        if self.file_size is None:
             return '—'
-        for unit in ('B', 'KB', 'MB', 'GB'):
-            if self.file_size < 1024:
-                return f'{self.file_size:.1f} {unit}'
-            self.file_size /= 1024
-        return f'{self.file_size:.1f} TB'
+        size = float(self.file_size)
+        for unit in ('B', 'KB', 'MB', 'GB', 'TB'):
+            if size < 1024.0:
+                return f'{size:.1f} {unit}'
+            size /= 1024.0
+        return f'{size:.1f} PB'
 
     def __repr__(self):
         return f'<Media {self.title} ({self.media_type})>'

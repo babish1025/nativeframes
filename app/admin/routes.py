@@ -59,7 +59,7 @@ def dashboard():
     draft_media     = Media.query.filter_by(status='draft', deleted_at=None).count()
     total_folders   = Folder.query.count()
     total_sessions  = ViewerSession.query.count()
-    unique_names    = db.session.query(func.count(func.distinct(ViewerSession.normalized_name))).scalar()
+    unique_names    = db.session.query(func.count(func.distinct(ViewerSession.normalized_name))).scalar() or 0
     media_views     = db.session.query(func.sum(Media.view_count)).filter(Media.deleted_at == None).scalar() or 0
     storage_bytes   = _get_storage_stats()
 

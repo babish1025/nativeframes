@@ -6,9 +6,154 @@
   <meta name="csrf-token" content="{{ csrf_token() }}" />
   <title>{% block title %}Admin — NativeFrames{% endblock %}</title>
   <meta name="robots" content="noindex,nofollow" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}?v=20261022_2" />
   <link rel="icon" href="{{ url_for('static', filename='images/nativeframes-logo.jpg') }}" type="image/jpeg" />
+
+  <style>
+    /* Admin Profile Dropdown */
+    .admin-profile-dropdown {
+      position: relative !important;
+      display: inline-flex !important;
+      align-items: center !important;
+    }
+
+    .admin-avatar {
+      width: 36px !important;
+      height: 36px !important;
+      border-radius: 50% !important;
+      background: linear-gradient(135deg, var(--nf-gold, #D4AF37), #8B6914) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-size: .85rem !important;
+      font-weight: 700 !important;
+      color: var(--nf-black, #101114) !important;
+      cursor: pointer !important;
+      border: 2px solid var(--nf-gold-border, rgba(212,175,55,.3)) !important;
+      outline: none !important;
+      padding: 0 !important;
+      user-select: none !important;
+      -webkit-user-select: none !important;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease !important;
+    }
+
+    .admin-avatar:hover,
+    .admin-profile-dropdown.open .admin-avatar {
+      transform: scale(1.08) !important;
+      border-color: var(--nf-gold, #D4AF37) !important;
+      box-shadow: 0 0 16px rgba(212, 175, 55, 0.5) !important;
+    }
+
+    .admin-dropdown-menu {
+      display: none !important;
+      position: absolute !important;
+      top: calc(100% + 10px) !important;
+      right: 0 !important;
+      min-width: 220px !important;
+      background: #181A20 !important;
+      background: rgba(22, 24, 30, 0.98) !important;
+      backdrop-filter: blur(20px) !important;
+      -webkit-backdrop-filter: blur(20px) !important;
+      border: 1px solid rgba(212, 175, 55, 0.35) !important;
+      border-radius: 12px !important;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(212, 175, 55, 0.2) !important;
+      padding: 0.5rem 0 !important;
+      z-index: 99999 !important;
+    }
+
+    .admin-profile-dropdown.open .admin-dropdown-menu {
+      display: block !important;
+      animation: nfDropdownSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    }
+
+    @keyframes nfDropdownSlide {
+      from {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.96);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .admin-dropdown-header {
+      display: flex !important;
+      align-items: center !important;
+      gap: 0.75rem !important;
+      padding: 0.65rem 1rem !important;
+    }
+
+    .admin-dropdown-avatar {
+      width: 32px !important;
+      height: 32px !important;
+      border-radius: 50% !important;
+      background: linear-gradient(135deg, var(--nf-gold, #D4AF37), #8B6914) !important;
+      color: #101114 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-weight: 700 !important;
+      font-size: 0.8rem !important;
+      flex-shrink: 0 !important;
+    }
+
+    .admin-dropdown-info {
+      min-width: 0 !important;
+      overflow: hidden !important;
+    }
+
+    .admin-dropdown-name {
+      font-size: 0.88rem !important;
+      font-weight: 600 !important;
+      color: #F4F3EE !important;
+      white-space: nowrap !important;
+      text-overflow: ellipsis !important;
+      overflow: hidden !important;
+    }
+
+    .admin-dropdown-role {
+      font-size: 0.72rem !important;
+      color: #D4AF37 !important;
+      font-weight: 500 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.04em !important;
+    }
+
+    .admin-dropdown-divider {
+      height: 1px !important;
+      background: rgba(255, 255, 255, 0.08) !important;
+      margin: 0.4rem 0 !important;
+    }
+
+    .admin-dropdown-item {
+      display: flex !important;
+      align-items: center !important;
+      gap: 0.65rem !important;
+      padding: 0.65rem 1rem !important;
+      color: #F4F3EE !important;
+      text-decoration: none !important;
+      font-size: 0.86rem !important;
+      transition: background 0.15s ease, color 0.15s ease !important;
+      cursor: pointer !important;
+    }
+
+    .admin-dropdown-item:hover {
+      background: rgba(212, 175, 55, 0.12) !important;
+      color: #D4AF37 !important;
+    }
+
+    .admin-dropdown-item.logout-item {
+      color: #ff6b6b !important;
+    }
+
+    .admin-dropdown-item.logout-item:hover {
+      background: rgba(244, 67, 54, 0.14) !important;
+      color: #ff8585 !important;
+    }
+  </style>
   {% block head %}{% endblock %}
+
 </head>
 <body>
 
@@ -70,11 +215,6 @@
       </a>
     </nav>
 
-    <div class="sidebar-footer">
-      <a href="{{ url_for('auth.admin_logout') }}" class="nav-item hover-gold">
-        <span class="icon">🚪</span> Logout
-      </a>
-    </div>
   </aside>
   <!-- ===================== /SIDEBAR ===================== -->
 
@@ -93,8 +233,45 @@
         <a href="{{ url_for('gallery.index') }}" class="btn btn-ghost btn-sm" target="_blank" title="View Gallery">
           🖼 View Gallery
         </a>
-        <div class="admin-avatar" title="{{ g.admin.username if g.admin else 'Admin' }}">
-          {{ (g.admin.username[0]|upper) if g.admin else 'A' }}
+
+        <!-- Admin Profile Dropdown -->
+        <div class="admin-profile-dropdown" id="admin-profile-dropdown">
+          <button type="button" class="admin-avatar" id="admin-avatar-btn"
+                  onclick="toggleAdminProfileMenu(event)"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="{{ g.admin.username if g.admin else 'Admin' }} — Click for profile and logout">
+            {{ (g.admin.username[0]|upper) if g.admin else 'A' }}
+          </button>
+
+          <div class="admin-dropdown-menu" id="admin-dropdown-menu" role="menu" aria-labelledby="admin-avatar-btn">
+            <div class="admin-dropdown-header">
+              <div class="admin-dropdown-avatar">
+                {{ (g.admin.username[0]|upper) if g.admin else 'A' }}
+              </div>
+              <div class="admin-dropdown-info">
+                <div class="admin-dropdown-name">{{ g.admin.username if g.admin else 'Admin' }}</div>
+                <div class="admin-dropdown-role">Administrator</div>
+              </div>
+            </div>
+
+            <div class="admin-dropdown-divider"></div>
+
+            <a href="{{ url_for('admin.settings') }}" class="admin-dropdown-item" role="menuitem">
+              <span class="icon">⚙️</span>
+              <span>Settings</span>
+            </a>
+            <a href="{{ url_for('gallery.index') }}" class="admin-dropdown-item" target="_blank" role="menuitem">
+              <span class="icon">🖼️</span>
+              <span>View Gallery</span>
+            </a>
+
+            <div class="admin-dropdown-divider"></div>
+
+            <a href="{{ url_for('auth.admin_logout') }}" class="admin-dropdown-item logout-item" role="menuitem">
+              <span class="icon">🚪</span>
+              <span>Logout</span>
+            </a>
+          </div>
         </div>
       </div>
     </header>
@@ -123,7 +300,44 @@
 
 </div>
 
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}?v=20261022_2"></script>
+<script>
+  function toggleAdminProfileMenu(e) {
+    if (e) {
+      if (e.stopPropagation) e.stopPropagation();
+      if (e.preventDefault) e.preventDefault();
+    }
+    var dd = document.getElementById('admin-profile-dropdown');
+    var btn = document.getElementById('admin-avatar-btn');
+    if (!dd) return;
+    var isOpen = dd.classList.toggle('open');
+    if (btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  }
+
+  document.addEventListener('click', function(e) {
+    var dd = document.getElementById('admin-profile-dropdown');
+    var btn = document.getElementById('admin-avatar-btn');
+    if (dd && !dd.contains(e.target)) {
+      dd.classList.remove('open');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      var dd = document.getElementById('admin-profile-dropdown');
+      var btn = document.getElementById('admin-avatar-btn');
+      if (dd && dd.classList.contains('open')) {
+        dd.classList.remove('open');
+        if (btn) {
+          btn.setAttribute('aria-expanded', 'false');
+          btn.focus();
+        }
+      }
+    }
+  });
+</script>
 {% block scripts %}{% endblock %}
 </body>
 </html>
+

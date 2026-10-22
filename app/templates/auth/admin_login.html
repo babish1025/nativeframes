@@ -8,7 +8,32 @@
   <meta name="robots" content="noindex,nofollow" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
   <link rel="icon" href="{{ url_for('static', filename='images/nativeframes-logo.jpg') }}" type="image/jpeg" />
+
+  <style>
+    /* Glowing Gold Eye Icon for Edge/Windows native password reveal */
+    input[type="password"]::-ms-reveal,
+    input[type="password"]::-ms-clear {
+      filter: brightness(0) saturate(100%) invert(74%) sepia(43%) saturate(1024%) hue-rotate(5deg) brightness(91%) contrast(89%) drop-shadow(0 0 7px rgba(212, 175, 55, 0.95)) !important;
+      cursor: pointer;
+      opacity: 0.9;
+      transition: filter 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    input[type="password"]::-ms-reveal:hover,
+    input[type="password"]::-ms-clear:hover {
+      filter: brightness(0) saturate(100%) invert(85%) sepia(60%) saturate(1500%) hue-rotate(8deg) brightness(120%) contrast(95%) drop-shadow(0 0 12px rgba(255, 183, 3, 1)) !important;
+      opacity: 1;
+      transform: scale(1.15);
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--nf-gold) !important;
+      box-shadow: 0 0 14px rgba(212, 175, 55, 0.3) !important;
+    }
+  </style>
 </head>
+
 <body>
 
 <div class="viewer-entry-page" role="main">

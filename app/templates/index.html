@@ -9,27 +9,69 @@
     content="Native Frames — Premium private media gallery. Promotions, Brand Films, Social Content." />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
   <link rel="icon" href="{{ url_for('static', filename='images/nativeframes-logo.jpg') }}" type="image/jpeg" />
+
+  <style>
+    /* Android-specific layout overrides */
+    body.nf-android .btn-primary,
+    body.nf-android .btn-lg {
+      min-height: 52px;
+      font-size: 1.05rem !important;
+      border-radius: 14px;
+      width: 100%;
+      justify-content: center;
+    }
+    body.nf-android .welcome-actions {
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    /* Tiny auto-detected device pill under tagline */
+    #device-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      padding: 0.22rem 0.8rem;
+      border-radius: 20px;
+      margin-top: 0.6rem;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.5s ease 0.3s, transform 0.5s ease 0.3s;
+    }
+    #device-pill.show { opacity: 1; transform: translateY(0); }
+
+    body.nf-android #device-pill {
+      background: rgba(61,220,132,0.12);
+      color: #3DDC84;
+      border: 1px solid rgba(61,220,132,0.28);
+    }
+    body.nf-windows #device-pill {
+      background: rgba(0,120,212,0.12);
+      color: #60aaff;
+      border: 1px solid rgba(0,120,212,0.28);
+    }
+  </style>
 </head>
 
 <body>
 
   <div class="welcome-page">
 
-    <!-- Decorative film strip lines -->
-    <div style="position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden;pointer-events:none;"
-      aria-hidden="true">
-      <div
-        style="position:absolute;top:0;left:25%;width:1px;height:100%;background:linear-gradient(to bottom,transparent,rgba(212,175,55,.08),transparent);">
-      </div>
-      <div
-        style="position:absolute;top:0;right:25%;width:1px;height:100%;background:linear-gradient(to bottom,transparent,rgba(212,175,55,.06),transparent);">
-      </div>
+    <!-- Decorative film-strip lines -->
+    <div style="position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden;pointer-events:none;" aria-hidden="true">
+      <div style="position:absolute;top:0;left:25%;width:1px;height:100%;background:linear-gradient(to bottom,transparent,rgba(212,175,55,.08),transparent);"></div>
+      <div style="position:absolute;top:0;right:25%;width:1px;height:100%;background:linear-gradient(to bottom,transparent,rgba(212,175,55,.06),transparent);"></div>
     </div>
 
     <div class="welcome-hero">
-      <img class="welcome-logo" src="{{ url_for('static', filename='images/nativeframes-logo.jpg') }}"
-        alt="Native Frames logo"
-        style="border-radius:50%; object-fit:cover; border:2px solid var(--nf-gold); box-shadow:0 0 25px rgba(212,175,55,0.35);" />
+      <img class="welcome-logo"
+           src="{{ url_for('static', filename='images/nativeframes-logo.jpg') }}"
+           alt="Native Frames logo"
+           style="border-radius:50%;object-fit:cover;border:2px solid var(--nf-gold);box-shadow:0 0 25px rgba(212,175,55,0.35);" />
 
       <div class="welcome-line"></div>
 
@@ -45,6 +87,9 @@
 
       <p class="welcome-tagline">Every frame tells a story.</p>
 
+      <!-- Auto-detected device pill — populated by JS, invisible until detected -->
+      <span id="device-pill" aria-live="polite"></span>
+
       <div class="welcome-line"></div>
 
       <div class="welcome-actions">
@@ -52,19 +97,86 @@
           Explore our Works
         </a>
         <a href="{{ url_for('auth.admin_login') }}" class="btn btn-ghost btn-lg" style="font-size:.85rem;">
-          Admin →
+          Admin &#8594;
         </a>
       </div>
     </div>
 
-    <!-- Footer -->
-    <footer
-      style="text-align:center;padding:1.5rem;color:var(--nf-text-dim);font-size:.75rem;border-top:1px solid var(--nf-border);">
-      © {{ now.year if now else 2024 }} Native Frames. All rights reserved.
-      &nbsp;·&nbsp; <a href="{{ url_for('auth.viewer_entry') }}" style="color:var(--nf-gold);">Enter Gallery</a>
+    <footer style="text-align:center;padding:1.5rem;color:var(--nf-text-dim);font-size:.75rem;border-top:1px solid var(--nf-border);">
+      &copy; {{ now.year if now else 2026 }} Native Frames. All rights reserved.
+      &nbsp;&middot;&nbsp;
+      <a href="{{ url_for('auth.viewer_entry') }}" style="color:var(--nf-gold);">Enter Gallery</a>
     </footer>
 
-  </div>
+  </div><!-- /.welcome-page -->
+
+
+  <script>
+  /* =====================================================
+     NativeFrames — Silent device auto-detection
+     No prompt shown. Reads User-Agent, applies body class,
+     tweaks layout, saves to sessionStorage for gallery pages.
+  ===================================================== */
+  (function () {
+
+    function detectDevice() {
+      var ua = navigator.userAgent;
+      if (/Android/i.test(ua))                         return 'android';
+      if (/Windows NT/i.test(ua))                      return 'windows';
+      if (/iPhone|iPad|iPod/i.test(ua))                return 'android';
+      if (/Macintosh|Mac OS X/i.test(ua))              return 'windows';
+      if (/CrOS/i.test(ua))                            return 'windows';
+      if (/Linux/i.test(ua) && !/Mobile/i.test(ua))   return 'windows';
+      if (/Mobile|Tablet/i.test(ua))                   return 'android';
+      return 'unknown';
+    }
+
+    function applyAndroid() {
+      var mv = document.querySelector('meta[name="viewport"]');
+      if (mv) mv.content = 'width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no';
+      document.documentElement.style.setProperty('-webkit-tap-highlight-color', 'transparent');
+    }
+
+    function applyWindows() {
+      document.documentElement.style.scrollbarWidth = 'thin';
+      document.documentElement.style.setProperty('scrollbar-color', '#D4AF37 #111114');
+    }
+
+    function showPill(device) {
+      var pill = document.getElementById('device-pill');
+      if (!pill) return;
+      if (device === 'android')      pill.textContent = '\uD83E\uDD16 Android';
+      else if (device === 'windows') pill.textContent = '\uD83D\uDDA5\uFE0F Windows';
+      else return;
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () { pill.classList.add('show'); });
+      });
+    }
+
+    var device = detectDevice();
+
+    try {
+      sessionStorage.setItem('nf_device', device);
+      sessionStorage.setItem('nf_layout', device === 'android' ? 'mobile' : 'desktop');
+    } catch (e) {}
+
+    // Apply class immediately so CSS rules fire before first paint
+    document.body.classList.add('nf-' + device);
+
+    function init() {
+      if (device === 'android')      applyAndroid();
+      else if (device === 'windows') applyWindows();
+      showPill(device);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+
+  })();
+  </script>
 
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
