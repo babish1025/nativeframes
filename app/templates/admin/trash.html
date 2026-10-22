@@ -46,7 +46,15 @@
           <tr class="media-list-row" style="border-bottom:1px solid rgba(255,255,255,0.03);">
             <!-- Thumb -->
             <td style="padding:0.85rem 1.25rem; width:72px;">
-              <div style="width:56px; height:42px; border-radius:6px; overflow:hidden; background:#1c1c20; opacity:0.6;">
+              <div class="admin-media-preview-btn"
+                   style="width:56px; height:42px; border-radius:6px; overflow:hidden; background:#1c1c20; opacity:0.85; cursor:pointer;"
+                   title="Click to view media directly"
+                   data-media-id="{{ m.id }}"
+                   data-url="{{ url_for('uploaded_file', filename=m.storage_path) }}"
+                   data-type="{{ m.media_type }}"
+                   data-title="{{ m.title }}"
+                   data-status="deleted"
+                   data-date="{{ m.created_at.strftime('%b %d, %Y') if m.created_at else '' }}">
                 {% if m.thumbnail_path %}
                 <img src="{{ url_for('uploaded_file', filename=m.thumbnail_path) }}" alt="" style="width:100%; height:100%; object-fit:cover;" />
                 {% elif m.media_type == 'photo' %}

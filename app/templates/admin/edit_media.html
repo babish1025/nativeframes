@@ -21,9 +21,28 @@
       </p>
     </div>
     <div style="display:flex; gap:0.75rem;">
+      <a href="{{ url_for('uploaded_file', filename=media.storage_path) }}"
+         target="_blank"
+         class="btn btn-ghost admin-media-preview-btn"
+         style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;"
+         data-media-id="{{ media.id }}"
+         data-url="{{ url_for('uploaded_file', filename=media.storage_path) }}"
+         data-type="{{ media.media_type }}"
+         data-title="{{ media.title }}"
+         data-size="{{ human_filesize(media.file_size or 0) }}"
+         data-duration="{{ format_duration(media.duration_seconds) if media.duration_seconds else '' }}"
+         data-status="{{ media.status }}"
+         data-folder="{{ media.folder.name if media.folder else '' }}"
+         data-date="{{ media.created_at.strftime('%b %d, %Y') if media.created_at else '' }}"
+         data-edit-url="{{ url_for('admin.edit_media', media_id=media.id) }}">
+        👁 View Media
+      </a>
+      <a href="{{ url_for('uploaded_file', filename=media.storage_path) }}" target="_blank" class="btn btn-ghost" style="display:flex; align-items:center; gap:0.4rem;" title="Open raw file directly">
+        ↗ Direct File
+      </a>
       {% if media.status == 'published' %}
-      <a href="{{ url_for('gallery.media_view', media_id=media.id) }}" target="_blank" class="btn btn-ghost" style="display:flex; align-items:center; gap:0.4rem;">
-        👁 View in Gallery
+      <a href="{{ url_for('gallery.media_view', media_id=media.id) }}" target="_blank" class="btn btn-ghost" style="display:flex; align-items:center; gap:0.4rem; color:var(--nf-text-dim); font-size:0.8rem;" title="View in public gallery">
+        🌐 Public Gallery
       </a>
       {% endif %}
       <form method="POST" action="{{ url_for('admin.edit_media', media_id=media.id) }}" style="display:inline;" onsubmit="return confirm('Move this frame to Recycle Bin?');">
@@ -130,11 +149,23 @@
         <h4 style="font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--nf-gold); margin:0 0 1rem;">
           Asset Preview
         </h4>
-        <div style="width:100%; aspect-ratio:16/10; border-radius:8px; overflow:hidden; background:#000; margin-bottom:1rem; display:flex; align-items:center; justify-content:center;">
+        <div class="admin-media-preview-btn"
+             style="width:100%; aspect-ratio:16/10; border-radius:8px; overflow:hidden; background:#000; margin-bottom:1rem; display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative;"
+             title="Click to view media directly"
+             data-media-id="{{ media.id }}"
+             data-url="{{ url_for('uploaded_file', filename=media.storage_path) }}"
+             data-type="{{ media.media_type }}"
+             data-title="{{ media.title }}"
+             data-size="{{ human_filesize(media.file_size or 0) }}"
+             data-duration="{{ format_duration(media.duration_seconds) if media.duration_seconds else '' }}"
+             data-status="{{ media.status }}"
+             data-folder="{{ media.folder.name if media.folder else '' }}"
+             data-date="{{ media.created_at.strftime('%b %d, %Y') if media.created_at else '' }}"
+             data-edit-url="{{ url_for('admin.edit_media', media_id=media.id) }}">
           {% if media.thumbnail_path %}
-          <img src="{{ url_for('uploaded_file', filename=media.thumbnail_path) }}" alt="" style="width:100%; height:100%; object-fit:cover;" />
+          <img src="{{ url_for('uploaded_file', filename=media.thumbnail_path) }}" alt="" style="width:100%; height:100%; object-fit:cover; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" />
           {% elif media.media_type == 'photo' %}
-          <img src="{{ url_for('uploaded_file', filename=media.storage_path) }}" alt="" style="width:100%; height:100%; object-fit:cover;" />
+          <img src="{{ url_for('uploaded_file', filename=media.storage_path) }}" alt="" style="width:100%; height:100%; object-fit:cover; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" />
           {% else %}
           <span style="font-size:2.5rem;">{% if media.media_type == 'video' %}🎬{% else %}🎵{% endif %}</span>
           {% endif %}

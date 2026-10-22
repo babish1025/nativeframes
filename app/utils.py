@@ -68,6 +68,26 @@ def viewer_required(f):
     def decorated(*args, **kwargs):
         token = session.get('viewer_token')
         if not token:
+            if session.get('admin_logged'):
+                vs = ViewerSession.query.filter_by(
+                    display_name='Admin Preview',
+                    session_status='active',
+                ).first()
+                if not vs:
+                    vs = ViewerSession(
+                        display_name='Admin Preview',
+                        normalized_name='admin preview',
+                        session_token=uuid.uuid4().hex + uuid.uuid4().hex,
+                        session_status='active',
+                        ip_address=get_client_ip(),
+                        user_agent=(request.headers.get('User-Agent', '') if request.headers else '')[:300],
+                    )
+                    db.session.add(vs)
+                    db.session.commit()
+                session['viewer_token'] = vs.session_token
+                session['viewer_name'] = vs.display_name
+                g.viewer_session = vs
+                return f(*args, **kwargs)
             return redirect(url_for('auth.viewer_entry', next=request.url))
         vs = ViewerSession.query.filter_by(
             session_token=token,

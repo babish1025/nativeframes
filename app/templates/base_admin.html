@@ -151,6 +151,183 @@
       background: rgba(244, 67, 54, 0.14) !important;
       color: #ff8585 !important;
     }
+
+    /* Admin Direct Media Preview Modal */
+    .admin-media-modal-overlay {
+      position: fixed !important;
+      inset: 0 !important;
+      background: rgba(4, 5, 8, 0.86) !important;
+      backdrop-filter: blur(14px) !important;
+      -webkit-backdrop-filter: blur(14px) !important;
+      z-index: 999999 !important;
+      display: none;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 1.25rem !important;
+      animation: nfModalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    }
+
+    @keyframes nfModalFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .admin-media-modal-box {
+      background: linear-gradient(155deg, #161820 0%, #0c0e12 100%) !important;
+      border: 1px solid rgba(212, 175, 55, 0.35) !important;
+      border-radius: 16px !important;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.9), 0 0 50px rgba(212, 175, 55, 0.12) !important;
+      width: 100% !important;
+      max-width: 1020px !important;
+      max-height: 92vh !important;
+      display: flex !important;
+      flex-direction: column !important;
+      overflow: hidden !important;
+      position: relative !important;
+      animation: nfModalZoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    }
+
+    @keyframes nfModalZoomIn {
+      from { opacity: 0; transform: scale(0.95) translateY(12px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .admin-media-modal-header {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 1rem !important;
+      padding: 0.85rem 1.25rem !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+      background: rgba(0, 0, 0, 0.25) !important;
+      flex-wrap: wrap !important;
+    }
+
+    .admin-media-header-left {
+      display: flex !important;
+      align-items: center !important;
+      gap: 0.65rem !important;
+      min-width: 0 !important;
+      flex: 1 !important;
+    }
+
+    .admin-media-title {
+      font-size: 1rem !important;
+      font-weight: 700 !important;
+      color: #fff !important;
+      margin: 0 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      max-width: 420px !important;
+    }
+
+    .admin-media-header-right {
+      display: flex !important;
+      align-items: center !important;
+      gap: 0.5rem !important;
+      flex-shrink: 0 !important;
+    }
+
+    .admin-media-modal-close {
+      background: rgba(255, 255, 255, 0.06) !important;
+      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      color: #fff !important;
+      width: 32px !important;
+      height: 32px !important;
+      border-radius: 8px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      cursor: pointer !important;
+      font-size: 1rem !important;
+      transition: all 0.15s ease !important;
+    }
+
+    .admin-media-modal-close:hover {
+      background: rgba(239, 68, 68, 0.2) !important;
+      border-color: #ef4444 !important;
+      color: #ef4444 !important;
+      transform: scale(1.08) !important;
+    }
+
+    .admin-media-modal-canvas {
+      position: relative !important;
+      background: #08090c !important;
+      min-height: 320px !important;
+      max-height: 68vh !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      overflow: hidden !important;
+      padding: 1.25rem !important;
+      flex: 1 !important;
+    }
+
+    .admin-media-nav-btn {
+      position: absolute !important;
+      top: 50% !important;
+      transform: translateY(-50%) !important;
+      width: 44px !important;
+      height: 44px !important;
+      border-radius: 50% !important;
+      background: rgba(18, 20, 26, 0.8) !important;
+      backdrop-filter: blur(8px) !important;
+      -webkit-backdrop-filter: blur(8px) !important;
+      border: 1px solid rgba(212, 175, 55, 0.35) !important;
+      color: #fff !important;
+      font-size: 1.5rem !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      cursor: pointer !important;
+      z-index: 10 !important;
+      transition: all 0.2s ease !important;
+      user-select: none !important;
+    }
+
+    .admin-media-nav-btn.prev { left: 1rem !important; }
+    .admin-media-nav-btn.next { right: 1rem !important; }
+
+    .admin-media-nav-btn:hover {
+      background: var(--nf-gold, #D4AF37) !important;
+      color: #101114 !important;
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.6) !important;
+      transform: translateY(-50%) scale(1.1) !important;
+    }
+
+    .admin-media-modal-footer {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      padding: 0.75rem 1.25rem !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+      background: rgba(0, 0, 0, 0.25) !important;
+      font-size: 0.8rem !important;
+      color: var(--nf-text-dim, #999) !important;
+      flex-wrap: wrap !important;
+      gap: 0.5rem !important;
+    }
+
+    .admin-media-meta-items {
+      display: flex !important;
+      align-items: center !important;
+      gap: 1rem !important;
+    }
+
+    .admin-media-keys-hint kbd {
+      background: rgba(255, 255, 255, 0.08) !important;
+      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+      border-radius: 4px !important;
+      padding: 0.1rem 0.4rem !important;
+      font-size: 0.75rem !important;
+      color: #ddd !important;
+    }
+
+    @keyframes pulseSlow {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 25px rgba(212,175,55,0.4); }
+      50% { transform: scale(1.06); box-shadow: 0 0 40px rgba(212,175,55,0.65); }
+    }
   </style>
   {% block head %}{% endblock %}
 
@@ -336,7 +513,270 @@
       }
     }
   });
+  window.toggleAdminProfileMenu = toggleAdminProfileMenu;
 </script>
+
+<!-- ===================== ADMIN DIRECT MEDIA PREVIEW MODAL ===================== -->
+<div id="admin-media-modal-overlay" class="admin-media-modal-overlay" onclick="closeAdminMediaModal()" role="dialog" aria-modal="true" aria-label="Direct Media Preview">
+  <div class="admin-media-modal-box" onclick="event.stopPropagation()">
+    
+    <!-- Header -->
+    <div class="admin-media-modal-header">
+      <div class="admin-media-header-left">
+        <span id="admin-media-modal-badge" class="media-type-badge photo" style="font-size:0.7rem; font-weight:700; text-transform:uppercase; padding:0.2rem 0.55rem; border-radius:4px;">PHOTO</span>
+        <h3 id="admin-media-modal-title" class="admin-media-title">Media Title</h3>
+        <span id="admin-media-modal-status" class="badge badge-gold" style="font-size:0.7rem;">published</span>
+        <span id="admin-media-modal-folder" style="font-size:0.75rem; color:#aaa; background:rgba(255,255,255,0.06); padding:0.2rem 0.5rem; border-radius:4px; display:none;">📁 Folder</span>
+      </div>
+      <div class="admin-media-header-right">
+        <a id="admin-media-modal-direct-link" href="#" target="_blank" class="btn btn-ghost btn-sm" title="Open raw file in a new tab" style="font-size:0.78rem; padding:0.3rem 0.65rem;">
+          ↗ Direct File
+        </a>
+        <a id="admin-media-modal-edit-link" href="#" class="btn btn-ghost btn-sm" title="Edit frame details" style="font-size:0.78rem; padding:0.3rem 0.65rem;">
+          ✎ Edit Frame
+        </a>
+        <button type="button" class="admin-media-modal-close" onclick="closeAdminMediaModal()" aria-label="Close Preview" title="Close (Esc)">
+          ✕
+        </button>
+      </div>
+    </div>
+
+    <!-- Media Canvas -->
+    <div class="admin-media-modal-canvas" id="admin-media-modal-canvas">
+      <button type="button" id="admin-media-prev-btn" class="admin-media-nav-btn prev" onclick="adminMediaNavigate(-1)" title="Previous (Left Arrow)">
+        ‹
+      </button>
+      <button type="button" id="admin-media-next-btn" class="admin-media-nav-btn next" onclick="adminMediaNavigate(1)" title="Next (Right Arrow)">
+        ›
+      </button>
+      <div id="admin-media-content-container" style="display:flex; align-items:center; justify-content:center; width:100%; height:100%;"></div>
+    </div>
+
+    <!-- Footer -->
+    <div class="admin-media-modal-footer">
+      <div class="admin-media-meta-items">
+        <span id="admin-media-meta-size">📏 0 B</span>
+        <span id="admin-media-meta-duration" style="display:none;">⏱ 00:00</span>
+        <span id="admin-media-meta-date">📅 Date</span>
+      </div>
+      <div class="admin-media-keys-hint">
+        <span>Use <kbd>←</kbd> <kbd>→</kbd> to navigate, <kbd>Esc</kbd> to close</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Admin Direct Media Preview Controller
+  (function() {
+    let currentMediaIndex = -1;
+
+    function getPreviewElements() {
+      // Find all preview buttons in order of appearance
+      return Array.from(document.querySelectorAll('.admin-media-preview-btn'));
+    }
+
+    window.openAdminMediaModal = function(target) {
+      let data = {};
+      const allBtns = getPreviewElements();
+
+      if (target instanceof HTMLElement) {
+        currentMediaIndex = allBtns.indexOf(target);
+        data = {
+          id: target.dataset.mediaId,
+          url: target.dataset.url || target.getAttribute('href'),
+          type: target.dataset.type || 'photo',
+          title: target.dataset.title || 'Untitled Asset',
+          size: target.dataset.size || '',
+          duration: target.dataset.duration || '',
+          status: target.dataset.status || 'published',
+          folder: target.dataset.folder || '',
+          date: target.dataset.date || '',
+          editUrl: target.dataset.editUrl || ''
+        };
+      } else {
+        data = target || {};
+      }
+
+      const overlay = document.getElementById('admin-media-modal-overlay');
+      const badge = document.getElementById('admin-media-modal-badge');
+      const title = document.getElementById('admin-media-modal-title');
+      const status = document.getElementById('admin-media-modal-status');
+      const folder = document.getElementById('admin-media-modal-folder');
+      const directLink = document.getElementById('admin-media-modal-direct-link');
+      const editLink = document.getElementById('admin-media-modal-edit-link');
+      const container = document.getElementById('admin-media-content-container');
+      const metaSize = document.getElementById('admin-media-meta-size');
+      const metaDuration = document.getElementById('admin-media-meta-duration');
+      const metaDate = document.getElementById('admin-media-meta-date');
+      const prevBtn = document.getElementById('admin-media-prev-btn');
+      const nextBtn = document.getElementById('admin-media-next-btn');
+
+      if (!overlay || !container) return;
+
+      // Header fields
+      title.textContent = data.title;
+      badge.className = 'media-type-badge ' + (data.type || 'photo');
+      badge.textContent = (data.type || 'photo').toUpperCase();
+
+      if (data.status) {
+        status.style.display = 'inline-block';
+        status.textContent = data.status;
+        status.className = 'badge ' + (data.status === 'published' ? 'badge-gold' : 'badge-ghost');
+      } else {
+        status.style.display = 'none';
+      }
+
+      if (data.folder) {
+        folder.style.display = 'inline-block';
+        folder.textContent = '📁 ' + data.folder;
+      } else {
+        folder.style.display = 'none';
+      }
+
+      if (data.url) {
+        directLink.href = data.url;
+        directLink.style.display = 'inline-flex';
+      } else {
+        directLink.style.display = 'none';
+      }
+
+      if (data.editUrl) {
+        editLink.href = data.editUrl;
+        editLink.style.display = 'inline-flex';
+      } else {
+        editLink.style.display = 'none';
+      }
+
+      // Footer metadata
+      if (data.size) {
+        metaSize.style.display = 'inline';
+        metaSize.textContent = '📏 ' + data.size;
+      } else {
+        metaSize.style.display = 'none';
+      }
+
+      if (data.duration) {
+        metaDuration.style.display = 'inline';
+        metaDuration.textContent = '⏱ ' + data.duration;
+      } else {
+        metaDuration.style.display = 'none';
+      }
+
+      if (data.date) {
+        metaDate.style.display = 'inline';
+        metaDate.textContent = '📅 ' + data.date;
+      } else {
+        metaDate.style.display = 'none';
+      }
+
+      // Render Media
+      container.innerHTML = '';
+      if (data.type === 'photo') {
+        const img = document.createElement('img');
+        img.src = data.url;
+        img.alt = data.title;
+        img.style.maxWidth = '100%';
+        img.style.maxHeight = '66vh';
+        img.style.objectFit = 'contain';
+        img.style.borderRadius = '8px';
+        img.style.boxShadow = '0 10px 40px rgba(0,0,0,0.7)';
+        container.appendChild(img);
+      } else if (data.type === 'video') {
+        const video = document.createElement('video');
+        video.src = data.url;
+        video.controls = true;
+        video.autoplay = true;
+        video.playsInline = true;
+        video.style.maxWidth = '100%';
+        video.style.maxHeight = '66vh';
+        video.style.borderRadius = '8px';
+        video.style.background = '#000';
+        video.style.boxShadow = '0 10px 40px rgba(0,0,0,0.85)';
+        video.style.outline = 'none';
+        container.appendChild(video);
+      } else if (data.type === 'audio') {
+        const audioWrapper = document.createElement('div');
+        audioWrapper.style.width = '100%';
+        audioWrapper.style.maxWidth = '480px';
+        audioWrapper.style.padding = '2rem 1rem';
+        audioWrapper.style.textAlign = 'center';
+        audioWrapper.innerHTML = `
+          <div style="width:84px; height:84px; border-radius:50%; background:linear-gradient(135deg, var(--nf-gold, #D4AF37), #8B6914); display:flex; align-items:center; justify-content:center; font-size:2.4rem; margin:0 auto 1.25rem; box-shadow:0 0 35px rgba(212,175,55,0.45); animation: pulseSlow 3s infinite ease-in-out;">🎵</div>
+          <div style="font-size:1.15rem; font-weight:700; color:#fff; margin-bottom:0.35rem;">${escapeHtml(data.title)}</div>
+          <div style="font-size:0.8rem; color:var(--nf-gold); margin-bottom:1.5rem; letter-spacing:0.04em;">NATIVE FRAMES AUDIO TRACK</div>
+          <audio src="${data.url}" controls autoplay style="width:100%; border-radius:30px; outline:none;"></audio>
+        `;
+        container.appendChild(audioWrapper);
+      }
+
+      // Prev/Next Navigation visibility
+      if (allBtns.length > 1 && currentMediaIndex >= 0) {
+        prevBtn.style.display = currentMediaIndex > 0 ? 'flex' : 'none';
+        nextBtn.style.display = currentMediaIndex < allBtns.length - 1 ? 'flex' : 'none';
+      } else {
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+      }
+
+      overlay.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    };
+
+    window.closeAdminMediaModal = function() {
+      const overlay = document.getElementById('admin-media-modal-overlay');
+      const container = document.getElementById('admin-media-content-container');
+      if (container) {
+        const v = container.querySelector('video');
+        if (v) { v.pause(); v.src = ''; }
+        const a = container.querySelector('audio');
+        if (a) { a.pause(); a.src = ''; }
+        container.innerHTML = '';
+      }
+      if (overlay) overlay.style.display = 'none';
+      document.body.style.overflow = '';
+    };
+
+    window.adminMediaNavigate = function(direction) {
+      const allBtns = getPreviewElements();
+      if (!allBtns.length) return;
+      const nextIdx = currentMediaIndex + direction;
+      if (nextIdx >= 0 && nextIdx < allBtns.length) {
+        window.openAdminMediaModal(allBtns[nextIdx]);
+      }
+    };
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Delegated click handler for any preview button or thumbnail
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('.admin-media-preview-btn');
+      if (btn) {
+        e.preventDefault();
+        e.stopPropagation();
+        window.openAdminMediaModal(btn);
+      }
+    });
+
+    // Keyboard controls
+    document.addEventListener('keydown', function(e) {
+      const overlay = document.getElementById('admin-media-modal-overlay');
+      if (!overlay || overlay.style.display === 'none') return;
+
+      if (e.key === 'Escape') {
+        window.closeAdminMediaModal();
+      } else if (e.key === 'ArrowLeft') {
+        window.adminMediaNavigate(-1);
+      } else if (e.key === 'ArrowRight') {
+        window.adminMediaNavigate(1);
+      }
+    });
+  })();
+</script>
+
 {% block scripts %}{% endblock %}
 </body>
 </html>
